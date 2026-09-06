@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { fetchAuditLogs, sendQuery } from '../api.js';
+import Counter from './ui/Counter.jsx';
+import AnimatedList from './ui/AnimatedList.jsx';
 
 const P1_TRIGGER_QUERY = 'Summarize the refund policy from our FAQ.';
 
@@ -68,7 +70,7 @@ function computeSparkbars(logs) {
   return bucketCounts.map((c) => Math.max(25, Math.round((c / maxBucket) * 100)));
 }
 
-export default function LiveTrace() {
+export default function LiveTrace({ onSelectLog }) {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isRunningTest, setIsRunningTest] = useState(false);
@@ -335,7 +337,9 @@ export default function LiveTrace() {
       <div className="metric-grid">
         <div className="card" id="metric-queries-today">
           <div className="lbl">Queries today</div>
-          <div className="val">{queriesToday}</div>
+          <div className="val">
+            <Counter value={queriesToday} fontSize={18} />
+          </div>
           <div className="sparkbars">
             {sparkbarHeights.map((h, i) => (
               <span
@@ -353,7 +357,7 @@ export default function LiveTrace() {
             className="val"
             style={{ color: injectionAttempts > 0 ? 'var(--red)' : 'var(--text-primary)' }}
           >
-            {injectionAttempts}
+            <Counter value={injectionAttempts} fontSize={18} />
           </div>
         </div>
 
@@ -363,13 +367,25 @@ export default function LiveTrace() {
             className="val"
             style={{ color: blockedCount > 0 ? 'var(--teal)' : 'var(--text-primary)' }}
           >
-            {injectionAttempts > 0 ? `${blockedCount}/${injectionAttempts}` : '0/0'}
+            <Counter value={blockedCount} fontSize={18} />/{injectionAttempts}
           </div>
         </div>
 
         <div className="card" id="metric-detection-rate">
           <div className="lbl">Detection rate</div>
-          <div className="val">{detectionRate}</div>
+          <div className="val">
+            {injectionAttempts > 0 ? (
+              <>
+                <Counter
+                  value={Math.round((detectedCount / injectionAttempts) * 100)}
+                  fontSize={18}
+                />
+                %
+              </>
+            ) : (
+              '—'
+            )}
+          </div>
         </div>
       </div>
 
@@ -419,14 +435,26 @@ export default function LiveTrace() {
             </div>
             {recentRuns.length > 0 ? (
               <div id="recent-runs-list">
-                {recentRuns.map((run) => (
-                  <div key={run.id} className="runrow">
-                    <span className="t">{formatTime(run.timestamp)}</span>
-                    <span className={`badge ${badgeColor(run.final_status)}`}>
-                      {capitalize(run.final_status)}
-                    </span>
-                  </div>
-                ))}
+                <AnimatedList
+                  items={recentRuns}
+                  showGradients={false}
+                  enableArrowNavigation={false}
+                  displayScrollbar={false}
+                  className="recent-runs-animated-list"
+                  renderItem={(run) => (
+                    <div
+                      key={run.id}
+                      className="runrow"
+                      onClick={() => onSelectLog?.(run)}
+                      style={{ cursor: onSelectLog ? 'pointer' : 'default' }}
+                    >
+                      <span className="t">{formatTime(run.timestamp)}</span>
+                      <span className={`badge ${badgeColor(run.final_status)}`}>
+                        {capitalize(run.final_status)}
+                      </span>
+                    </div>
+                  )}
+                />
               </div>
             ) : (
               <div style={{ fontSize: '11px', color: 'var(--text-muted)', padding: '6px 0' }}>

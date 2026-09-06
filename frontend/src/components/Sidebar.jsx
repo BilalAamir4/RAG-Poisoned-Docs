@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { fetchSettings, updateSettings } from '../api.js'
 
+import LineSidebar from './ui/LineSidebar.jsx'
+
 const NAV_ITEMS = [
   {
     id: 'trace',
@@ -137,22 +139,12 @@ export default function Sidebar({ activeRoute, onNavigate }) {
         <span className="label">Sentinel</span>
       </div>
 
-      <ul className="navlist">
-        {NAV_ITEMS.map((item) => {
-          const isActive = activeRoute === item.id
-          return (
-            <li
-              key={item.id}
-              className={`navitem ${isActive ? 'active' : ''}`}
-              onClick={() => onNavigate(item.id)}
-              data-page={item.id}
-            >
-              {item.icon}
-              <span className="label">{item.label}</span>
-            </li>
-          )
-        })}
-      </ul>
+      <LineSidebar
+        items={NAV_ITEMS}
+        activeRoute={activeRoute}
+        onItemClick={(_index, item) => onNavigate(item.id)}
+        className="sidebar-line-nav"
+      />
 
       <div className="sidebar-foot">
         <div className="lbl">Mitigation</div>

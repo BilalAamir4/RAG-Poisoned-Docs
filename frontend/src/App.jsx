@@ -54,6 +54,7 @@ function getRouteFromHash() {
 export default function App() {
   const [activeRoute, setActiveRoute] = useState(getRouteFromHash)
   const [selectedLog, setSelectedLog] = useState(null)
+  const [replayOrigin, setReplayOrigin] = useState(null)
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -70,8 +71,9 @@ export default function App() {
     }
   }
 
-  const handleSelectLog = (log) => {
+  const handleSelectLog = (log, origin) => {
     setSelectedLog(log)
+    setReplayOrigin(origin || null)
     navigateTo('replay')
   }
 
@@ -81,22 +83,23 @@ export default function App() {
     <div className="app">
       <Sidebar activeRoute={activeRoute} onNavigate={navigateTo} />
 
-      <main className="content">
+      <main className={`content${activeRoute === 'replay' ? ' wide' : ''}`}>
         {activeRoute === 'trace' ? (
-          <LiveTrace onSelectLog={handleSelectLog} />
+          <LiveTrace onSelectLog={(log) => handleSelectLog(log, 'trace')} />
         ) : activeRoute === 'chat' ? (
           <Chat />
         ) : activeRoute === 'documents' ? (
           <Documents />
         ) : activeRoute === 'audit' ? (
-          <AuditLog onSelectLog={handleSelectLog} />
+          <AuditLog onSelectLog={(log) => handleSelectLog(log, 'audit')} />
         ) : activeRoute === 'replay' ? (
           <TraceDetail
             initialLog={selectedLog}
-            onBack={() => navigateTo('audit')}
+            onBack={replayOrigin ? () => navigateTo(replayOrigin) : undefined}
+            backLabel={replayOrigin ? `Back to ${SCREENS[replayOrigin].title}` : undefined}
           />
         ) : activeRoute === 'test-runs' ? (
-          <TestSuiteResults onSelectLog={handleSelectLog} />
+          <TestSuiteResults onSelectLog={(log) => handleSelectLog(log, 'test-runs')} />
         ) : activeRoute === 'settings' ? (
           <Settings />
         ) : (

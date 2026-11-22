@@ -156,11 +156,18 @@ describe('Settings Component (RTL + jsdom DOM and State Transition Suite)', () =
     // Commit change on mouseup
     fireEvent.mouseUp(slider, { target: { value: '0.45' } })
 
+    // Committing a value must NOT switch the threshold on (independent control)
     await waitFor(() => {
-      expect(api.updateSettings).toHaveBeenCalledWith({
-        threshold_value: 0.45,
-        retrieval_score_threshold: true,
-      })
+      expect(api.updateSettings).toHaveBeenCalledWith({ threshold_value: 0.45 })
+    })
+
+    // The threshold has its own independent on/off switch
+    const thresholdToggle = container.querySelector('#thresholdToggle')
+    expect(thresholdToggle.className).toContain('toggle off')
+    fireEvent.click(thresholdToggle)
+    await waitFor(() => {
+      expect(thresholdToggle.className).toContain('toggle on')
+      expect(api.updateSettings).toHaveBeenCalledWith({ retrieval_score_threshold: true })
     })
   })
 

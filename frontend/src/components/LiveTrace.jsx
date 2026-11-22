@@ -79,7 +79,8 @@ export default function LiveTrace({ onSelectLog }) {
   const loadData = useCallback(async () => {
     try {
       setError(null);
-      const data = await fetchAuditLogs({ limit: 50 });
+      // Promptfoo evaluation trials are shown on Test suite, not counted as live pipeline activity
+      const data = await fetchAuditLogs({ limit: 50, exclude_source: 'promptfoo' });
       setLogs(data.logs || []);
     } catch (err) {
       console.error('Failed to load audit logs:', err);
@@ -312,7 +313,9 @@ export default function LiveTrace({ onSelectLog }) {
                 <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
               </svg>
             </div>
-            <div className="lbl">Scan</div>
+            <div className="lbl">
+              Scan{scanNodeClass === 'flagged' ? ' · flagged' : scanNodeClass === 'pending' ? ' · running' : ''}
+            </div>
           </div>
           <div
             className={`line ${scanToGenLineClass}`}
@@ -328,7 +331,10 @@ export default function LiveTrace({ onSelectLog }) {
                 <path d="M12 3l1.5 5L19 9l-5.5 1L12 15l-1.5-5L5 9l5.5-1L12 3z" />
               </svg>
             </div>
-            <div className="lbl">Generate</div>
+            <div className="lbl">
+              Generate
+              {genNodeClass === 'safe' ? ' · safe' : genNodeClass === 'flagged' ? ' · leaked' : genNodeClass === 'pending' ? ' · running' : ''}
+            </div>
           </div>
         </div>
       </div>
@@ -336,7 +342,7 @@ export default function LiveTrace({ onSelectLog }) {
       {/* 4-Card Metric Grid */}
       <div className="metric-grid">
         <div className="card" id="metric-queries-today">
-          <div className="lbl">Queries today</div>
+          <div className="lbl">{todayLogs.length > 0 ? 'Queries today' : `Queries (last ${logs.length})`}</div>
           <div className="val">
             <Counter value={queriesToday} fontSize={18} />
           </div>
@@ -362,7 +368,7 @@ export default function LiveTrace({ onSelectLog }) {
         </div>
 
         <div className="card" id="metric-blocked">
-          <div className="lbl">Blocked</div>
+          <div className="lbl">Attacks blocked</div>
           <div
             className="val"
             style={{ color: blockedCount > 0 ? 'var(--teal)' : 'var(--text-primary)' }}
@@ -372,7 +378,7 @@ export default function LiveTrace({ onSelectLog }) {
         </div>
 
         <div className="card" id="metric-detection-rate">
-          <div className="lbl">Detection rate</div>
+          <div className="lbl">Flagged at Scan</div>
           <div className="val">
             {injectionAttempts > 0 ? (
               <>
@@ -386,6 +392,7 @@ export default function LiveTrace({ onSelectLog }) {
               '—'
             )}
           </div>
+          <div className="sub">threshold · log-only</div>
         </div>
       </div>
 

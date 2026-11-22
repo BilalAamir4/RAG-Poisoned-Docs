@@ -193,7 +193,9 @@ const LineSidebar = ({
               }}
               className={`navitem line-sidebar__item ${isActive ? 'active' : ''}`}
               data-page={id}
-              aria-current={isActive ? 'true' : undefined}
+              title={label}
+              aria-label={label}
+              aria-current={isActive ? 'page' : undefined}
               onClick={() => handleClick(index, item)}
             >
               {showMarker && <span className="line-sidebar__marker" aria-hidden="true" />}

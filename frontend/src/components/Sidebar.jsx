@@ -110,6 +110,10 @@ export default function Sidebar({ activeRoute, onNavigate }) {
   const isMitigationActive = m
     ? Boolean(m.delimiter || m.sanitization || m.output_filter || m.output_filtering || m.retrieval_score_threshold)
     : false
+  const activeCount = m
+    ? [m.delimiter, m.sanitization, m.output_filter || m.output_filtering, m.retrieval_score_threshold].filter(Boolean).length
+    : 0
+  const railState = activeCount === 4 ? 'all' : activeCount === 0 ? 'off' : 'custom'
 
   const toggleMitigations = async () => {
     if (!settings || updating) return
@@ -144,9 +148,16 @@ export default function Sidebar({ activeRoute, onNavigate }) {
         activeRoute={activeRoute}
         onItemClick={(_index, item) => onNavigate(item.id)}
         className="sidebar-line-nav"
+        maxShift={0}
       />
 
       <div className="sidebar-foot">
+        <span
+          className={`rail-dot ${railState}`}
+          role="img"
+          aria-label={`Mitigations: ${activeCount} of 4 on`}
+          title={`Mitigations: ${activeCount} of 4 on`}
+        />
         <div className="lbl">Mitigation</div>
         <div className="toggle-row">
           <div

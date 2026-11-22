@@ -80,8 +80,14 @@ export function determineBanner(result) {
       Array.isArray(result.retrieved_chunks) &&
       result.retrieved_chunks.some((c) => c.flagged)
   )
+  const mits = result.active_mitigations || {}
   const isAttackStatus = finalStatus === 'leaked'
-  const isDefenseStatus = finalStatus === 'blocked' || finalStatus === 'sanitized'
+  const shieldIcon = (
+    <svg className="icon" viewBox="0 0 24 24">
+      <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
+      <path d="M9 12l2 2 4-4" />
+    </svg>
+  )
 
   // If attack succeeded or leaked unverified content: Danger banner
   if (isAttackStatus) {
@@ -98,33 +104,41 @@ export function determineBanner(result) {
     }
   }
 
-  // If defense blocked or sanitized untrusted content: Safe banner
-  if (isDefenseStatus) {
+  // Output filter replaced the answer: Safe banner naming the control that acted
+  if (finalStatus === 'blocked') {
     return {
       type: 'safe',
       id: 'chatBannerSafe',
-      icon: (
-        <svg className="icon" viewBox="0 0 24 24">
-          <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
-          <path d="M9 12l2 2 4-4" />
-        </svg>
-      ),
-      text: 'Untrusted content wrapped — instruction ignored',
+      icon: shieldIcon,
+      text: 'Blocked by output filter — answer replaced',
     }
   }
 
-  // If chunk was flagged at retrieval threshold, display appropriate state
-  if (isFlagged || hasFlaggedChunk) {
+  // Answer did not repeat the injected claim with input-side defenses active
+  if (finalStatus === 'sanitized') {
     return {
       type: 'safe',
       id: 'chatBannerSafe',
+      icon: shieldIcon,
+      text: mits.delimiter
+        ? 'Untrusted content wrapped — instruction ignored'
+        : 'Injection phrases stripped — claim not repeated',
+    }
+  }
+
+  // Flag threshold only logs: never present it as a defense
+  if (isFlagged || hasFlaggedChunk) {
+    return {
+      type: 'amber',
+      id: 'chatBannerFlagged',
       icon: (
         <svg className="icon" viewBox="0 0 24 24">
-          <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
-          <path d="M9 12l2 2 4-4" />
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
       ),
-      text: 'Untrusted content wrapped — instruction ignored',
+      text: 'Flagged for review (log only — did not block)',
     }
   }
 

@@ -35,7 +35,9 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     active_mitigations TEXT NOT NULL,
     llm_response TEXT,
     reasoning_content TEXT,
-    final_status TEXT NOT NULL
+    final_status TEXT NOT NULL,
+    -- 'live' = real pipeline run (POST /query); 'promptfoo' = Promptfoo evaluation trial
+    source TEXT NOT NULL DEFAULT 'live'
 );
 """
 
@@ -82,6 +84,8 @@ def init_db() -> None:
             )
         if "reasoning_content" not in cols:
             cursor.execute("ALTER TABLE audit_logs ADD COLUMN reasoning_content TEXT")
+        if "source" not in cols:
+            cursor.execute("ALTER TABLE audit_logs ADD COLUMN source TEXT NOT NULL DEFAULT 'live'")
         conn.commit()
 
 
@@ -169,6 +173,7 @@ CSV_COLUMNS = [
     "llm_response",
     "reasoning_content",
     "final_status",
+    "source",
 ]
 
 
@@ -200,6 +205,7 @@ def log_pipeline_run(
     final_status: str = "clean",
     timestamp: Optional[str] = None,
     reasoning_content: Optional[str] = None,
+    source: str = "live",
 ) -> Dict[str, Any]:
     """
     Logs an end-to-end pipeline run into the SQLite audit_logs table.
@@ -269,8 +275,9 @@ def log_pipeline_run(
                 active_mitigations,
                 llm_response,
                 reasoning_content,
-                final_status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                final_status,
+                source
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 timestamp,
@@ -286,6 +293,7 @@ def log_pipeline_run(
                 llm_response,
                 reasoning_content,
                 final_status,
+                source,
             ),
         )
         conn.commit()
@@ -307,47 +315,76 @@ def log_pipeline_run(
         "llm_response": llm_response,
         "reasoning_content": reasoning_content,
         "final_status": final_status,
+        "source": source,
     }
 
 
 
-def get_recent_logs(limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+def get_recent_logs(
+    limit: int = 50, offset: int = 0, exclude_source: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """
     Retrieves recent audit log records ordered by timestamp descending.
+    Optionally excludes rows from one source (e.g. 'promptfoo' evaluation trials).
     Called directly by the FastAPI layer.
     """
     init_db()
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute(
-            """
-            SELECT * FROM audit_logs
-            ORDER BY timestamp DESC, id DESC
-            LIMIT ? OFFSET ?
-            """,
-            (limit, offset),
-        )
+        if exclude_source:
+            cursor.execute(
+                """
+                SELECT * FROM audit_logs
+                WHERE source != ?
+                ORDER BY timestamp DESC, id DESC
+                LIMIT ? OFFSET ?
+                """,
+                (exclude_source, limit, offset),
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT * FROM audit_logs
+                ORDER BY timestamp DESC, id DESC
+                LIMIT ? OFFSET ?
+                """,
+                (limit, offset),
+            )
         rows = cursor.fetchall()
         return [_format_row_dict(row) for row in rows]
 
 
-def get_flagged_logs(limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+def get_flagged_logs(
+    limit: int = 50, offset: int = 0, exclude_source: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """
     Retrieves flagged audit log records ordered by timestamp descending.
+    Optionally excludes rows from one source (e.g. 'promptfoo' evaluation trials).
     Called directly by the FastAPI layer.
     """
     init_db()
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute(
-            """
-            SELECT * FROM audit_logs
-            WHERE is_flagged = 1 OR final_status != 'clean'
-            ORDER BY timestamp DESC, id DESC
-            LIMIT ? OFFSET ?
-            """,
-            (limit, offset),
-        )
+        if exclude_source:
+            cursor.execute(
+                """
+                SELECT * FROM audit_logs
+                WHERE (is_flagged = 1 OR final_status != 'clean') AND source != ?
+                ORDER BY timestamp DESC, id DESC
+                LIMIT ? OFFSET ?
+                """,
+                (exclude_source, limit, offset),
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT * FROM audit_logs
+                WHERE is_flagged = 1 OR final_status != 'clean'
+                ORDER BY timestamp DESC, id DESC
+                LIMIT ? OFFSET ?
+                """,
+                (limit, offset),
+            )
         rows = cursor.fetchall()
         return [_format_row_dict(row) for row in rows]
 

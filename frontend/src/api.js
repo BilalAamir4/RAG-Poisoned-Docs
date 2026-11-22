@@ -61,6 +61,7 @@ export async function fetchAuditLogs(params = {}) {
   if (params.limit !== undefined) query.set('limit', params.limit);
   if (params.offset !== undefined) query.set('offset', params.offset);
   if (params.flagged_only !== undefined) query.set('flagged_only', params.flagged_only);
+  if (params.exclude_source) query.set('exclude_source', params.exclude_source);
 
   const qs = query.toString();
   const url = `${API_BASE_URL}/audit-log${qs ? `?${qs}` : ''}`;

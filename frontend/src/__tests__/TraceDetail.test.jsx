@@ -69,7 +69,23 @@ describe('TraceDetail Component & Substring Highlighting Suite', () => {
         retrieval_score_threshold: true,
       },
     });
-    api.fetchAuditLogById.mockResolvedValue(mockUnmitigatedLog);
+    // Return the record matching the requested id (693 = the live re-run created by sendQuery)
+    api.fetchAuditLogById.mockImplementation(async (id) =>
+      id === 693
+        ? {
+            id: 693,
+            raw_query: mockMitigatedQueryResult.query,
+            retrieved_chunks: mockMitigatedQueryResult.retrieved_chunks,
+            assembled_prompt: mockMitigatedQueryResult.prompt,
+            llm_response: mockMitigatedQueryResult.response,
+            final_status: mockMitigatedQueryResult.final_status,
+            is_flagged: true,
+            threshold_enabled: true,
+            flag_threshold: 0.3,
+            active_mitigations: mockMitigatedQueryResult.active_mitigations,
+          }
+        : mockUnmitigatedLog
+    );
     api.fetchAuditLogs.mockResolvedValue({ logs: [mockUnmitigatedLog] });
     api.sendQuery.mockResolvedValue(mockMitigatedQueryResult);
   });
@@ -134,9 +150,6 @@ describe('TraceDetail Component & Substring Highlighting Suite', () => {
     expect(unmitThresholdVal.textContent).not.toBe('0.00');
     expect(unmitThresholdVal.textContent).not.toBe('');
 
-    const unmitSummary = screen.getByTestId('unmitigated-threshold-summary');
-    expect(unmitSummary.textContent).toContain('Flag Threshold: OFF (—)');
-
     const unmitBadge = screen.getByTestId('unmitigated-control-flag-threshold');
     expect(unmitBadge.textContent).toContain('OFF');
   });
@@ -156,6 +169,11 @@ describe('TraceDetail Component & Substring Highlighting Suite', () => {
     const unmitBanner = screen.getByTestId('unmitigated-banner');
     expect(unmitBanner).toHaveClass('danger');
     expect(unmitBanner.textContent).toContain('Attack succeeded');
+
+    // Right column is empty until the comparison is explicitly run (no auto re-run on mount)
+    expect(screen.queryByTestId('mitigated-banner')).toBeNull();
+    expect(api.sendQuery).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId('rerun-full-defense-btn'));
 
     // Right column mitigated status banner (teal)
     await waitFor(() => {

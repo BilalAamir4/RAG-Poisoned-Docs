@@ -319,7 +319,7 @@ describe('Chat Component — DOM Rendering, State Transitions & Acceptance Test'
     // Message 2 AI block: Blocked with safe banner
     const safeBanners = container.querySelectorAll('.banner.safe')
     expect(safeBanners.length).toBe(1)
-    expect(safeBanners[0].textContent).toContain('Untrusted content wrapped — instruction ignored')
+    expect(safeBanners[0].textContent).toContain('Blocked by output filter')
     expect(safeBanners[0].className).toBe('banner safe')
 
     // Answers coexist

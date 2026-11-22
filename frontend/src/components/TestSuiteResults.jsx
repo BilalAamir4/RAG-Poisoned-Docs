@@ -106,31 +106,31 @@ export default function TestSuiteResults({ onSelectLog }) {
       )}
 
       {/* Header Metric Grid */}
-      <div className="metric-grid mb-4">
-        <div className="card metric-card" data-testid="metric-trials">
-          <div className="metric-label">Trials run</div>
-          <div className="metric-val">{stats.trials_run}</div>
-          <div className="metric-sub">Multi-trial evaluation</div>
+      <div className="metric-grid">
+        <div className="card" data-testid="metric-trials">
+          <div className="lbl">Trials run</div>
+          <div className="val">{stats.trials_run}</div>
+          <div className="sub">Multi-trial evaluation</div>
         </div>
 
-        <div className="card metric-card" data-testid="metric-succeeded">
-          <div className="metric-label">Injection attempts succeeded</div>
-          <div className="metric-val text-red">{stats.succeeded}</div>
-          <div className="metric-sub">Attacker goal achieved (Leaked)</div>
+        <div className="card" data-testid="metric-succeeded">
+          <div className="lbl">Injection attempts succeeded</div>
+          <div className="val text-red">{stats.succeeded}</div>
+          <div className="sub">Attacker goal achieved (Leaked)</div>
         </div>
 
-        <div className="card metric-card" data-testid="metric-blocked">
-          <div className="metric-label">Injection attempts blocked</div>
-          <div className="metric-val text-teal">{stats.blocked}</div>
-          <div className="metric-sub">Mitigation held (Protected)</div>
+        <div className="card" data-testid="metric-blocked">
+          <div className="lbl">Injection attempts blocked</div>
+          <div className="val text-teal">{stats.blocked}</div>
+          <div className="sub">Mitigation held (Protected)</div>
         </div>
 
-        <div className="card metric-card" data-testid="metric-rate">
-          <div className="metric-label">Overall block rate</div>
-          <div className={`metric-val ${stats.block_rate_pct >= 50 ? 'text-teal' : 'text-red'}`}>
+        <div className="card" data-testid="metric-rate">
+          <div className="lbl">Overall block rate</div>
+          <div className={`val ${stats.block_rate_pct >= 50 ? 'text-teal' : 'text-red'}`}>
             {stats.block_rate_pct.toFixed(1)}%
           </div>
-          <div className="metric-sub">
+          <div className="sub">
             {stats.blocked} of {stats.trials_run} defended
           </div>
         </div>
@@ -188,7 +188,7 @@ export default function TestSuiteResults({ onSelectLog }) {
                 <div className="flex justify-between items-center text-xs mb-1.5">
                   <span className="font-medium text-primary">{tech.label}</span>
                   <div className="flex items-center gap-2 font-mono">
-                    <span className={pct >= 50 ? 'text-teal font-semibold' : 'text-red font-semibold'}>
+                    <span className="text-text-primary font-semibold">
                       {pct.toFixed(1)}% Blocked
                     </span>
                     {tech.trials_count > 0 && (
@@ -236,9 +236,14 @@ export default function TestSuiteResults({ onSelectLog }) {
                   <th style={{ width: '60px' }}>Trial #</th>
                   <th>Query</th>
                   <th>Mitigation Config</th>
-                  <th style={{ width: '110px' }}>Promptfoo</th>
+                  <th
+                    style={{ width: '150px' }}
+                    title="Promptfoo's assertion graded the raw model output, before the pipeline's output filter. The Outcome column shows the pipeline result after the filter."
+                  >
+                    Raw model (pre-filter)
+                  </th>
                   <th style={{ width: '100px' }}>Outcome</th>
-                  <th style={{ width: '100px', textAlign: 'right' }}>Action</th>
+                  <th style={{ width: '120px', textAlign: 'right', whiteSpace: 'nowrap' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -256,45 +261,45 @@ export default function TestSuiteResults({ onSelectLog }) {
                       <td>
                         <div className="flex flex-wrap gap-1">
                           {mits.delimiter && (
-                            <span className="badge text-[10px]" style={{ background: 'var(--teal-dim)', color: 'var(--teal)' }}>
+                            <span className="badge gray">
                               Delim
                             </span>
                           )}
                           {mits.sanitization && (
-                            <span className="badge text-[10px]" style={{ background: 'var(--amber-dim)', color: 'var(--amber)' }}>
+                            <span className="badge gray">
                               Sanit
                             </span>
                           )}
                           {mits.output_filter && (
-                            <span className="badge text-[10px]" style={{ background: 'var(--violet-dim)', color: 'var(--violet)' }}>
+                            <span className="badge gray">
                               OutFilter
                             </span>
                           )}
                           {mits.retrieval_score_threshold && (
-                            <span className="badge text-[10px]" style={{ background: 'var(--panel-2)', color: 'var(--text-secondary)' }}>
+                            <span className="badge gray">
                               Thresh
                             </span>
                           )}
                           {!mits.delimiter && !mits.sanitization && !mits.output_filter && !mits.retrieval_score_threshold && (
-                            <span className="badge text-[10px] text-muted">All OFF</span>
+                            <span className="badge gray">All OFF</span>
                           )}
                         </div>
                       </td>
                       <td>
                         {trial.promptfoo_passed ? (
-                          <span className="badge safe text-xs">Passed</span>
+                          <span className="badge teal">Passed</span>
                         ) : (
-                          <span className="badge danger text-xs">Failed</span>
+                          <span className="badge red">Failed</span>
                         )}
                       </td>
                       <td>
                         {isLeaked ? (
-                          <span className="badge danger text-xs">LEAKED</span>
+                          <span className="badge red">LEAKED</span>
                         ) : (
-                          <span className="badge safe text-xs">BLOCKED</span>
+                          <span className="badge teal">BLOCKED</span>
                         )}
                       </td>
-                      <td style={{ textAlign: 'right' }}>
+                      <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                         <button
                           className="text-xs text-violet hover:underline font-mono"
                           onClick={() => {

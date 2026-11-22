@@ -31,3 +31,6 @@ data/*
 *.sqlite
 *.sqlite3
 *.db
+
+# Phase 1 audit scratch output
+audit_artifacts/

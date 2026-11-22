@@ -114,10 +114,8 @@ export default function Settings() {
     const numVal = parseFloat(val)
     setSavingKey('threshold_value')
     try {
-      const res = await updateSettings({
-        threshold_value: numVal,
-        retrieval_score_threshold: true,
-      })
+      // Changing the value never switches the control on — the threshold has its own toggle
+      const res = await updateSettings({ threshold_value: numVal })
       if (res?.mitigations) {
         setMitigations((prev) => ({
           ...prev,
@@ -285,7 +283,7 @@ export default function Settings() {
           <div>
             <div className="title">Output filtering</div>
             <div className="desc">
-              Checks the model's response for signs of a leaked system prompt before it's returned to the user.
+              Scans the model's answer for the injected false-refund claim or attacker link and replaces it with a blocked notice.
             </div>
           </div>
           <div
@@ -304,12 +302,23 @@ export default function Settings() {
         {/* Row 4: Flag Threshold Slider (Supporting control, not a 4th equal toggle row) */}
         <div className="setting-row">
           <div>
-            <div className="title">Flag threshold</div>
+            <div className="title">
+              <span>Flag threshold</span>
+              <span className="badge gray">Log only</span>
+            </div>
             <div className="desc">
-              Chunks scoring above this similarity to known attack patterns are flagged for review.
+              Flags retrieved chunks whose retrieval score is at or above this value. Logging only — it never blocks or changes the answer.
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                opacity: mitigations.retrieval_score_threshold ? 1 : 0.45,
+              }}
+            >
             <input
               type="range"
               id="thresholdSlider"
@@ -331,6 +340,18 @@ export default function Settings() {
             >
               {thresholdDisplay}
             </span>
+            </div>
+            <div
+              id="thresholdToggle"
+              className={`toggle ${mitigations.retrieval_score_threshold ? 'on' : 'off'} ${savingKey === 'retrieval_score_threshold' ? 'opacity-60 cursor-wait' : ''}`}
+              onClick={() => handleToggle('retrieval_score_threshold')}
+              role="switch"
+              aria-checked={Boolean(mitigations.retrieval_score_threshold)}
+              aria-label="Toggle Flag threshold"
+              title={`Flag threshold: ${mitigations.retrieval_score_threshold ? 'On' : 'Off'} (Click to toggle)`}
+            >
+              <div className="knob" />
+            </div>
           </div>
         </div>
       </div>

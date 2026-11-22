@@ -269,15 +269,17 @@ def get_audit_logs(
     limit: int = Query(default=50, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     flagged_only: bool = Query(default=False),
+    exclude_source: Optional[str] = Query(default=None),
 ):
     """
     Retrieves audit log records ordered by timestamp descending.
     Supports filtering by flagged_only, with pagination via limit and offset.
+    Optional exclude_source (e.g. 'promptfoo') omits rows from that source.
     """
     if flagged_only:
-        raw_logs = audit_log.get_flagged_logs(limit=limit, offset=offset)
+        raw_logs = audit_log.get_flagged_logs(limit=limit, offset=offset, exclude_source=exclude_source)
     else:
-        raw_logs = audit_log.get_recent_logs(limit=limit, offset=offset)
+        raw_logs = audit_log.get_recent_logs(limit=limit, offset=offset, exclude_source=exclude_source)
 
     formatted_logs = [_format_log_row(r) for r in raw_logs]
     return {
@@ -452,14 +454,28 @@ def get_test_runs():
         resp["recent_audit_runs"] = [_format_log_row(r) for r in recent_logs]
         return resp
 
-    # Check if a previous promptfoo run saved output on disk
+    # Prefer the processed result persisted by the last live suite run (read-only)
+    if promptfoo_runner.PROMPTFOO_PROCESSED_PATH.exists():
+        try:
+            with open(promptfoo_runner.PROMPTFOO_PROCESSED_PATH, "r", encoding="utf-8") as f:
+                processed = json.load(f)
+            latest_promptfoo_result = processed
+            resp = dict(processed)
+            resp["ablation_matrix"] = P4_BASELINE_ABLATION_RUNS
+            recent_logs = audit_log.get_recent_logs(limit=20)
+            resp["recent_audit_runs"] = [_format_log_row(r) for r in recent_logs]
+            return resp
+        except Exception:
+            pass
+
+    # Otherwise re-derive from raw Promptfoo output on disk — WITHOUT writing audit rows
     if promptfoo_runner.PROMPTFOO_OUTPUT_PATH.exists() and promptfoo_runner.PROMPTFOO_TESTS_PATH.exists():
         try:
             with open(promptfoo_runner.PROMPTFOO_TESTS_PATH, "r", encoding="utf-8") as f:
                 test_cases = json.load(f)
             with open(promptfoo_runner.PROMPTFOO_OUTPUT_PATH, "r", encoding="utf-8") as f:
                 raw_data = json.load(f)
-            processed = promptfoo_runner.process_and_log_promptfoo_results(raw_data, test_cases)
+            processed = promptfoo_runner.process_promptfoo_results(raw_data, test_cases, log_to_audit=False)
             latest_promptfoo_result = processed
             resp = dict(processed)
             resp["ablation_matrix"] = P4_BASELINE_ABLATION_RUNS

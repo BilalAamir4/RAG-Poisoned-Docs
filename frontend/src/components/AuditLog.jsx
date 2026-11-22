@@ -165,7 +165,7 @@ export default function AuditLog({ onSelectLog }) {
 
       <div
         className="card"
-        style={{ padding: 0, overflow: 'hidden' }}
+        style={{ padding: 0, overflowX: 'auto' }}
         data-testid="audit-table-card"
         data-current-filter={filter}
         data-row-count={displayedLogs.length}

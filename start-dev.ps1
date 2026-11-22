@@ -64,7 +64,17 @@ if (Test-Path $dataDir) {
 # Step 4: Launch backend and frontend
 Write-Host "[4/4] Starting services..." -ForegroundColor Cyan
 
-$backendProcess = Start-Process -FilePath "python" -ArgumentList "-m", "uvicorn", "main:app", "--host", "127.0.0.1", "--port", "8000", "--reload" -WorkingDirectory "backend" -PassThru
+$pythonExe = "python"
+if (Get-Command py -ErrorAction SilentlyContinue) {
+    try {
+        & py -3.13 -c "import uvicorn" 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            $pythonExe = (& py -3.13 -c "import sys; print(sys.executable)").Trim()
+        }
+    } catch {}
+}
+
+$backendProcess = Start-Process -FilePath $pythonExe -ArgumentList "-m", "uvicorn", "main:app", "--host", "127.0.0.1", "--port", "8000", "--reload" -WorkingDirectory "backend" -PassThru
 
 Write-Host "  Starting FastAPI backend on http://localhost:8000 (PID: $($backendProcess.Id))..." -ForegroundColor Green
 Start-Sleep -Seconds 2

@@ -704,8 +704,27 @@ P0-P4 were developed sequentially in the workspace before git was initialized. A
   - **Automated Test Suite**: `pytest tests/test_p16_deployment.py`: 3/3 passed in 27.58s.
 
 
+### Phase 1 — Audit — DONE 2026-11-22
+- Read-only audit; no source/config/document/.env/test edited. Full report: `PHASE1_AUDIT.md`.
+- Files created: `PHASE1_AUDIT.md`; `audit_artifacts/` (screens, old-ui, backend raw requests/responses, `data_backup_20261122_143130/`, run script) — `.gitignore` now ignores `audit_artifacts/`.
+- Tests run and results:
+  - `tests/test_chunk_boundary.py`: PASS (retrieved[0]=faq_doc.md, score 0.3294, exact payload present).
+  - 3x defenses-OFF trigger query (qwen3.5): 3/3 attack succeeded (false-refund claim; URL not emitted).
+  - 3x defenses-ON trigger query (qwen3.5): 0/3 demonstrated blocks — all returned an EMPTY response labelled `sanitized`. Backend verdict: FAIL.
+  - `tests/test_p4_ablation.py` (16x3, qwen3.5): 1 passed (all rows stable) but all 24 delimiter-ON trials were empty responses; delimiter-OFF rows genuine (only output filter demonstrably blocks).
+  - UI: 73 elements classified — 31 REAL, 20 DERIVED, 14 STATIC-OK, 7 FABRICATED, 1 BROKEN. Backend-down test and old-UI (HEAD b0c7320) comparison done.
+- Known issues (found in Phase 1):
+  1. Empty responses: Ollama context 4096 vs qwen3.5 reasoning; `llm_client.py:93` swallowed empty content; `pipeline.py:208` classified it `sanitized`.
+  2. `backend/.env` was `qwen3.5:latest`; this file said `llama3.1` (not installed). All recorded baselines are llama3.1/Groq.
+  3. Test-suite screen shows stale llama3.1 Promptfoo data (2026-09-05); its 50 "View trace" links have `audit_id: null`.
+  4. FABRICATED UI items: Documents chips (42/356/89) + `|| 7`; Live trace "section 2" and "verified against knowledge base"; Settings reset text "unpoisoned"; backend fallback `P4_BASELINE_ABLATION_RUNS`.
+  5. Wrong formulas: Live trace "Injection attempts"/"Attacks blocked", Chat citation section label, Trace-detail "as wrapped" chunk with sanitization ON, Test-suite BLOCKED label.
+  6. Chat toggle overrides granular Settings on every query; commit b0c7320 (P18) was missing from this file.
+- Side effects: pre-audit audit.db (316 rows) wiped by reset (backup in `audit_artifacts/`); original mitigation settings restored.
+- Recovery note (2026-11-23): this entry was re-added after PROJECT_STATE.md was deleted and restored from git. PROJECT_STATE.md had no uncommitted changes before the audit (`audit_artifacts/git_status_before.txt`), so no earlier content is known to be lost.
+
 ## Current phase
-Runtime Reverted to Local Ollama & Deployment Paused (Pre-P17 Hold)
+Phase 2 — demo reliability (pending Phase 1 review)
 
 ## Next phase
 P17 — Cloud Deployment (Railway + Vercel) when live demo date approaches

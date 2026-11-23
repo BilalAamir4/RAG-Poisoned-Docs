@@ -1,0 +1,93 @@
+@import "tw-animate-css";
+
+/*
+ * shadcn tokens for Demo Mode. All names carry an `--sh-` prefix and live on :root, so they
+ * (a) apply to portalled content (Tooltip, AlertDialog) and (b) never collide with the Inspector's
+ * existing hex tokens (--border, --red, --teal, --amber ...). Utilities such as `border-border`
+ * resolve to these prefixed vars through the @theme block below.
+ * Status colours are NOT defined here: red/teal/amber come from the existing tokens (same hex values as
+ * status.js's red/teal/amber vocabulary) and are used only through the status variants.
+ */
+:root {
+  --sh-background: var(--bg);
+  --sh-foreground: var(--text-primary);
+  --sh-card: var(--panel);
+  --sh-card-foreground: var(--text-primary);
+  --sh-popover: var(--panel-2);
+  --sh-popover-foreground: var(--text-primary);
+  --sh-primary: var(--violet);
+  --sh-primary-foreground: #0b0b12;
+  --sh-secondary: var(--panel-2);
+  --sh-secondary-foreground: var(--text-primary);
+  --sh-muted: var(--panel-2);
+  --sh-muted-foreground: #a7a9bd;
+  --sh-accent: #1a1d28;
+  --sh-accent-foreground: var(--text-primary);
+  /* `destructive` is deliberately NOT red: neutral light grey. Never used for verdicts. */
+  --sh-destructive: #d9d9e3;
+  --sh-border: var(--border-strong);
+  --sh-input: var(--border-strong);
+  --sh-ring: var(--violet);
+  --radius: 0.625rem;
+}
+
+@theme inline {
+  --color-background: var(--sh-background);
+  --color-foreground: var(--sh-foreground);
+  --color-card: var(--sh-card);
+  --color-card-foreground: var(--sh-card-foreground);
+  --color-popover: var(--sh-popover);
+  --color-popover-foreground: var(--sh-popover-foreground);
+  --color-primary: var(--sh-primary);
+  --color-primary-foreground: var(--sh-primary-foreground);
+  --color-secondary: var(--sh-secondary);
+  --color-secondary-foreground: var(--sh-secondary-foreground);
+  --color-muted: var(--sh-muted);
+  --color-muted-foreground: var(--sh-muted-foreground);
+  --color-accent: var(--sh-accent);
+  --color-accent-foreground: var(--sh-accent-foreground);
+  --color-destructive: var(--sh-destructive);
+  --color-border: var(--sh-border);
+  --color-input: var(--sh-input);
+  --color-ring: var(--sh-ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* Base rules from shadcn, scoped so they never touch the Inspector. `sh-scope` is put on the demo root
+   and on every portalled content element (tooltip, dialog). */
+@layer base {
+  .sh-scope,
+  .sh-scope * {
+    border-color: var(--sh-border);
+  }
+  .sh-scope {
+    color: var(--sh-foreground);
+    font-family: var(--sans);
+  }
+}
+
+/* Projector scale: while the demo is mounted the root font size is 23px, so every rem-based shadcn
+   class scales with it (text-sm = 20.1px, text-base = 23px, text-3xl = 43px, text-4xl = 52px). */
+html:has(.demo-root) {
+  font-size: 23px;
+}
+html:has(.demo-root) body {
+  background: var(--bg);
+}
+.demo-root {
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+/* Status variants (read by Badge / Alert). Colours come from the shared red / teal / amber tokens. */
+:root {
+  --status-red: var(--red);
+  --status-red-dim: var(--red-dim);
+  --status-teal: var(--teal);
+  --status-teal-dim: var(--teal-dim);
+  --status-amber: var(--amber);
+  --status-amber-dim: var(--amber-dim);
+}

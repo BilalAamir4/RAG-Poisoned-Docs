@@ -81,6 +81,14 @@ class QueryRequest(BaseModel):
         default=3,
         description="Number of top chunks to retrieve",
     )
+    sandbox: bool = Field(
+        default=False,
+        description="Demo Mode only: retrieve from the temporary sandbox collection instead of the real one",
+    )
+
+
+class SandboxRequest(BaseModel):
+    instruction: str = Field(..., description="Visitor's own wording of the hidden instruction (validated server-side)")
 
 
 class SettingsUpdateRequest(BaseModel):
@@ -135,11 +143,15 @@ def run_query(request: QueryRequest):
 
     top_k = request.similarity_top_k if request.similarity_top_k and request.similarity_top_k > 0 else 3
 
+    if request.sandbox and not ingestion.sandbox_exists():
+        raise HTTPException(status_code=409, detail="No demo sandbox exists. Plant an instruction first.")
+
     try:
         result = pipeline.query_pipeline(
             query=request.query,
             mitigation_flags=flags,
             similarity_top_k=top_k,
+            sandbox=request.sandbox,
         )
     except RuntimeError as err:
         # LLM failure (timeout, empty completion). HTTPException is handled inside the CORS
@@ -157,6 +169,8 @@ def run_query(request: QueryRequest):
         "audit_id": result["audit_id"],
         "active_mitigations": result["audit_entry"]["active_mitigations"],
         "reasoning_content": result.get("reasoning_content"),
+        "stages": result["stages"],
+        "sandbox": result["sandbox"],
     }
 
 
@@ -206,6 +220,47 @@ def list_documents():
     return {
         "documents": docs,
         "total": len(docs),
+    }
+
+
+NEWLINE = chr(10)
+BLANK_LINE = NEWLINE * 2
+
+
+@app.get("/documents/{filename}")
+def get_document(filename: str):
+    """
+    Read-only: returns the real text of one indexed document. For the poisoned document it also returns where the
+    planted instruction sits (character offsets into `text`) and the policy paragraph it contradicts
+    (the paragraph immediately before the instruction, section heading removed), all computed server-side.
+    """
+    _, documents_dir = ingestion.get_chroma_paths()
+    if Path(filename).name != filename or filename.startswith("."):
+        raise HTTPException(status_code=404, detail="Document not found")
+    file_path = documents_dir / filename
+    if not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    text = file_path.read_text(encoding="utf-8", errors="replace")
+    start = text.find(ingestion.ATTACK_PAYLOAD)
+    injected_span = None
+    policy_text = None
+    section_heading = None
+    if start >= 0:
+        injected_span = {"start": start, "end": start + len(ingestion.ATTACK_PAYLOAD)}
+        paragraph = text[:start].rstrip().split(BLANK_LINE)[-1]
+        lines = paragraph.split(NEWLINE)
+        while lines and lines[0].lstrip().startswith("#"):
+            section_heading = lines.pop(0).lstrip("# ").strip()
+        policy_text = NEWLINE.join(lines).strip() or None
+
+    return {
+        "filename": filename,
+        "text": text,
+        "is_poisoned": start >= 0,
+        "injected_span": injected_span,
+        "section_heading": section_heading,
+        "policy_text": policy_text,
     }
 
 
@@ -323,6 +378,45 @@ def get_single_audit_log(log_id: int):
 
 # --- Settings Endpoints ---
 
+# --- Demo sandbox (Demo Mode step 7) ---
+
+@app.get("/demo/sandbox")
+def get_sandbox():
+    state = ingestion.get_sandbox_state()
+    return {
+        "exists": ingestion.sandbox_exists(),
+        "max_chars": ingestion.MAX_SANDBOX_INSTRUCTION_CHARS,
+        "instruction": state.get("instruction"),
+    }
+
+
+@app.post("/demo/sandbox")
+def create_sandbox(request: SandboxRequest):
+    """Plants the visitor's instruction in a temporary copy of the FAQ and indexes it into the single sandbox collection."""
+    try:
+        ingestion.validate_sandbox_instruction(request.instruction)
+    except ValueError as err:
+        raise HTTPException(status_code=422, detail=str(err))
+    try:
+        return ingestion.build_sandbox(request.instruction)
+    except RuntimeError as err:
+        raise HTTPException(status_code=500, detail=f"Sandbox build failed: {err}")
+
+
+@app.delete("/demo/sandbox")
+def delete_sandbox():
+    return {"dropped": ingestion.drop_sandbox()}
+
+
+@app.on_event("startup")
+def _drop_leftover_sandbox():
+    # A sandbox never survives a backend restart.
+    try:
+        ingestion.drop_sandbox()
+    except Exception:
+        pass
+
+
 @app.get("/settings")
 def get_settings():
     """
@@ -395,6 +489,12 @@ def reset_demo_data():
         ingestion.reindex_baseline_documents()
     except Exception as err:
         raise HTTPException(status_code=500, detail=f"Failed to re-index Chroma collection during reset: {err}")
+
+    # Step 2b: Drop any leftover demo sandbox collection
+    try:
+        ingestion.drop_sandbox()
+    except Exception:
+        pass
 
     # Step 3: Clear the SQLite audit log
     deleted_logs_count = audit_log.clear_audit_log()

@@ -9,8 +9,9 @@ Implements 4 independently toggleable security controls (Spec 1.7 & 1.8):
 """
 
 import re
+import time
 from typing import Optional, List, Dict, Any
-from ingestion import get_retriever
+from ingestion import get_retriever, SANDBOX_COLLECTION_NAME, get_sandbox_state
 import llm_client
 import audit_log
 
@@ -218,6 +219,7 @@ def query_pipeline(
     query: str,
     mitigation_flags: Optional[Dict[str, Any]] = None,
     similarity_top_k: int = 3,
+    sandbox: bool = False,
 ) -> Dict[str, Any]:
     """
     Executes the full retrieval-to-generation pipeline with 4 independent mitigations
@@ -241,8 +243,13 @@ def query_pipeline(
         threshold_val = DEFAULT_RETRIEVAL_SCORE_THRESHOLD
 
     # Stage 1: Retrieval
-    retriever = get_retriever(similarity_top_k=similarity_top_k)
+    t_start = time.perf_counter()
+    if sandbox:
+        retriever = get_retriever(similarity_top_k=similarity_top_k, collection_name=SANDBOX_COLLECTION_NAME)
+    else:
+        retriever = get_retriever(similarity_top_k=similarity_top_k)
     retrieved_chunks = retriever.retrieve(query)
+    retrieval_ms = int((time.perf_counter() - t_start) * 1000)
 
     # Stage 2: Threshold evaluation across FULL retrieved_chunks array
     is_flagged, annotated_chunks = evaluate_threshold(
@@ -268,7 +275,9 @@ def query_pipeline(
     prompt = build_prompt(query, annotated_chunks, mitigation_flags=pipeline_flags)
 
     # Stage 5: LLM Generation
+    t_gen = time.perf_counter()
     raw_response, reasoning_content = llm_client.generate(prompt, return_reasoning=True)
+    generation_ms = int((time.perf_counter() - t_gen) * 1000)
 
     # Stage 6: Output filtering (Partial / Exploratory)
     if output_filter:
@@ -304,9 +313,33 @@ def query_pipeline(
         retrieval_score_threshold=threshold_val if threshold_enabled else None,
         reasoning_content=reasoning_content,
         final_status=final_status,
+        source="demo-sandbox" if sandbox else "live",
     )
 
+    # Facts about what really ran (read by Demo Mode's per-run pipeline view)
+    stages = {
+        "retrieval_ms": retrieval_ms,
+        "generation_ms": generation_ms,
+        "total_ms": int((time.perf_counter() - t_start) * 1000),
+        "sanitization_ran": sanitization,
+        "sanitization_modified": was_sanitized,
+        "delimiter_ran": delimiter,
+        "threshold_ran": threshold_enabled,
+        "threshold_flagged": is_flagged,
+        "output_filter_ran": output_filter,
+        "output_filter_blocked": is_blocked,
+    }
+    sandbox_info = None
+    if sandbox:
+        instruction = get_sandbox_state().get("instruction") or ""
+        texts = [getattr(c, "text", "") or "" for c in annotated_chunks]
+        sandbox_info = {
+            "planted_text_in_retrieved": bool(instruction) and any(instruction in t for t in texts),
+        }
+
     return {
+        "stages": stages,
+        "sandbox": sandbox_info,
         "query": query,
         "retrieved_chunks": annotated_chunks,
         "prompt": prompt,

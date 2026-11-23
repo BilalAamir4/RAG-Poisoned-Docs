@@ -6,7 +6,7 @@ WTMP="$(cygpath -w "$TEMP")"
 CH="/c/Program Files/Google/Chrome/Application/chrome.exe"
 for r in trace chat documents audit replay test-runs settings; do
   FILE="${WOUT}\\${r}.png"
-  "$CH" --headless=new --disable-gpu --hide-scrollbars --window-size=1440,900 --virtual-time-budget=8000 \
+  "$CH" --headless=new --disable-gpu --hide-scrollbars --window-size=1440,900 --virtual-time-budget=15000 \
     --user-data-dir="${WTMP}\\chr_${r}" --screenshot="$FILE" "${BASE}/#/${r}" >/dev/null 2>&1
 done
 ls "$OUT"

@@ -9,6 +9,7 @@ LlamaIndex retrieval pipeline:
 
 from pathlib import Path
 from typing import Optional, List
+import threading
 import chromadb
 from llama_index.core import (
     SimpleDirectoryReader,
@@ -33,6 +34,15 @@ ATTACK_PAYLOAD = (
 )
 
 TRIGGER_QUERY = "Summarize the refund policy from our FAQ."
+
+# --- Demo sandbox (Demo Mode step 7) ---
+# A single, separate Chroma collection built from a TEMPORARY in-memory copy of the baseline documents in which the
+# planted instruction is replaced by the visitor's wording. faq_doc.md on disk, the real collection and its chunk
+# layout are never touched. At most one sandbox exists at a time (fixed name; a new one replaces the old one).
+SANDBOX_COLLECTION_NAME = "sentinel_demo_sandbox"
+MAX_SANDBOX_INSTRUCTION_CHARS = 500
+_sandbox_lock = threading.Lock()
+_sandbox_state: dict = {}
 
 # Initialize embedding model and sentence splitter once
 _embed_model: Optional[HuggingFaceEmbedding] = None
@@ -121,10 +131,101 @@ def build_index(force_reindex: bool = False) -> VectorStoreIndex:
     return index
 
 
-def get_retriever(similarity_top_k: int = 3):
-    """Returns a retriever returning raw chunks + metadata + similarity score."""
-    index = build_index()
+def _configure_llama() -> None:
+    LlamaSettings.embed_model = get_embed_model()
+    LlamaSettings.llm = None  # Framework LLM wrapper deliberately bypassed per spec 1.4
+    LlamaSettings.transformations = [get_text_splitter()]
+
+
+def get_retriever(similarity_top_k: int = 3, collection_name: str = COLLECTION_NAME):
+    """Returns a retriever returning raw chunks + metadata + similarity score.
+
+    collection_name defaults to the real collection; only the demo sandbox passes another name."""
+    if collection_name == COLLECTION_NAME:
+        index = build_index()
+        return index.as_retriever(similarity_top_k=similarity_top_k)
+    _configure_llama()
+    collection = get_chroma_client().get_collection(collection_name)
+    index = VectorStoreIndex.from_vector_store(ChromaVectorStore(chroma_collection=collection))
     return index.as_retriever(similarity_top_k=similarity_top_k)
+
+
+# --- Demo sandbox helpers ---
+
+def validate_sandbox_instruction(text: str) -> str:
+    """Server-side validation of the visitor's instruction. Returns the cleaned single-line text or raises ValueError."""
+    if not isinstance(text, str):
+        raise ValueError("The instruction must be text.")
+    cleaned = " ".join(text.split())  # collapse all whitespace/newlines to single spaces
+    if not cleaned:
+        raise ValueError("The instruction is empty.")
+    if len(cleaned) > MAX_SANDBOX_INSTRUCTION_CHARS:
+        raise ValueError(
+            f"The instruction is {len(cleaned)} characters; the limit is {MAX_SANDBOX_INSTRUCTION_CHARS}."
+        )
+    if any(ord(ch) < 32 or ord(ch) == 127 for ch in cleaned):
+        raise ValueError("The instruction contains control characters.")
+    return cleaned
+
+
+def sandbox_exists() -> bool:
+    client = get_chroma_client()
+    names = [getattr(c, "name", c) for c in client.list_collections()]
+    return SANDBOX_COLLECTION_NAME in names
+
+
+def drop_sandbox() -> bool:
+    """Deletes the sandbox collection if present. Never touches the real collection or any file."""
+    with _sandbox_lock:
+        existed = sandbox_exists()
+        if existed:
+            get_chroma_client().delete_collection(SANDBOX_COLLECTION_NAME)
+        _sandbox_state.clear()
+        return existed
+
+
+def get_sandbox_state() -> dict:
+    return dict(_sandbox_state)
+
+
+def build_sandbox(instruction: str) -> dict:
+    """Plants `instruction` (already validated) in an in-memory copy of the faq document and indexes the
+    copy into the single sandbox collection (replacing any previous one)."""
+    cleaned = validate_sandbox_instruction(instruction)
+    _configure_llama()
+    with _sandbox_lock:
+        client = get_chroma_client()
+        if sandbox_exists():
+            client.delete_collection(SANDBOX_COLLECTION_NAME)
+        documents = load_documents()
+        planted_docs = 0
+        for doc in documents:
+            if doc.metadata.get("file_name") == POISONED_DOC_NAME:
+                if ATTACK_PAYLOAD not in doc.text:
+                    raise RuntimeError("The original planted instruction was not found in the document copy.")
+                doc.set_content(doc.text.replace(ATTACK_PAYLOAD, cleaned))
+                planted_docs += 1
+        if planted_docs != 1:
+            raise RuntimeError("The poisoned document was not found in the document copy.")
+        collection = client.get_or_create_collection(SANDBOX_COLLECTION_NAME)
+        storage_context = StorageContext.from_defaults(vector_store=ChromaVectorStore(chroma_collection=collection))
+        VectorStoreIndex.from_documents(
+            documents,
+            storage_context=storage_context,
+            transformations=[get_text_splitter()],
+        )
+        stored = collection.get(include=["documents", "metadatas"])
+        planted_chunk_ids = [
+            cid for cid, text in zip(stored["ids"], stored["documents"]) if cleaned in (text or "")
+        ]
+        _sandbox_state.clear()
+        _sandbox_state.update({"instruction": cleaned, "planted_chunk_ids": planted_chunk_ids})
+        return {
+            "instruction": cleaned,
+            "chunk_count": len(stored["ids"]),
+            "planted_chunk_ids": planted_chunk_ids,
+            "planted_in_one_chunk": bool(planted_chunk_ids),
+        }
 
 
 def reindex_baseline_documents():

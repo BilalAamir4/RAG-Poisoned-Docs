@@ -66,7 +66,7 @@ describe('AuditLog Component - RTL + jsdom DOM and State Transition Suite', () =
     await waitFor(() => {
       expect(screen.getByText('Audit log')).toBeInTheDocument();
       expect(screen.getByText('All events')).toBeInTheDocument();
-      expect(screen.getByText('Flagged only')).toBeInTheDocument();
+      expect(screen.getByText('Non-clean only')).toBeInTheDocument();
       expect(screen.getByText('Export CSV')).toBeInTheDocument();
     });
 
@@ -95,9 +95,9 @@ describe('AuditLog Component - RTL + jsdom DOM and State Transition Suite', () =
     expect(row1.querySelector('.badge').className).toContain('teal');
     expect(row1.className).toBe('logrow ');
 
-    // Row 102 (Leaked): Badge red, Prompt leaked
+    // Row 102 (Leaked): Badge red, Injection succeeded
     const row2 = screen.getByTestId('log-row-102');
-    expect(row2.querySelector('.badge').textContent).toBe('Prompt leaked');
+    expect(row2.querySelector('.badge').textContent).toBe('Injection succeeded');
     expect(row2.querySelector('.badge').className).toContain('red');
     expect(row2.className).toBe('logrow flagged');
 
@@ -107,14 +107,14 @@ describe('AuditLog Component - RTL + jsdom DOM and State Transition Suite', () =
     expect(row3.querySelector('.badge').className).toContain('teal');
     expect(row3.className).toBe('logrow flagged');
 
-    // Row 104 (Sanitized): Badge amber, Sanitized
+    // Row 104 (Sanitized): Badge teal, Sanitized
     const row4 = screen.getByTestId('log-row-104');
     expect(row4.querySelector('.badge').textContent).toBe('Sanitized');
-    expect(row4.querySelector('.badge').className).toContain('amber');
+    expect(row4.querySelector('.badge').className).toContain('teal');
     expect(row4.className).toBe('logrow flagged');
   });
 
-  it('Check 3: Filter transition to "Flagged only" hides clean rows and confirms only non-clean rows show', async () => {
+  it('Check 3: Filter transition to "Non-clean only" hides clean rows and confirms only non-clean rows show', async () => {
     // Initial fetch returns all 4 rows
     api.fetchAuditLogs.mockResolvedValueOnce({
       logs: sampleLogs,
@@ -136,7 +136,7 @@ describe('AuditLog Component - RTL + jsdom DOM and State Transition Suite', () =
       total: 3,
     });
 
-    // Click "Flagged only"
+    // Click "Non-clean only"
     const flaggedBtn = screen.getByTestId('filter-flagged-btn');
     fireEvent.click(flaggedBtn);
 
@@ -146,7 +146,7 @@ describe('AuditLog Component - RTL + jsdom DOM and State Transition Suite', () =
     });
 
     // Verify API called with flagged_only: true
-    expect(api.fetchAuditLogs).toHaveBeenCalledWith({ flagged_only: true });
+    expect(api.fetchAuditLogs).toHaveBeenCalledWith({ flagged_only: true, limit: 50 });
 
     // Assert only non-clean rows are in the DOM
     const filteredRows = container.querySelectorAll('tbody tr.logrow');
@@ -186,7 +186,7 @@ describe('AuditLog Component - RTL + jsdom DOM and State Transition Suite', () =
       expect(api.exportAuditLogCsv).toHaveBeenCalledWith(false);
     });
 
-    // Switch to "Flagged only"
+    // Switch to "Non-clean only"
     api.fetchAuditLogs.mockResolvedValueOnce({
       logs: sampleLogs.filter((l) => l.final_status !== 'clean'),
       total: 3,

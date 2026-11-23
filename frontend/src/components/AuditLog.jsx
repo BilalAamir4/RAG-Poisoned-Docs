@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { fetchAuditLogs, exportAuditLogCsv, getExportAuditLogsCsvUrl } from '../api';
+import { statusColor, statusLabel } from '../status.js';
 
 function formatTime(isoString) {
   if (!isoString) return '—';
@@ -10,34 +11,6 @@ function formatTime(isoString) {
   } catch (_) {
     return isoString;
   }
-}
-
-function badgeColor(status) {
-  switch (status?.toLowerCase()) {
-    case 'leaked':
-      return 'red';
-    case 'blocked':
-      return 'teal';
-    case 'sanitized':
-      return 'amber';
-    case 'flagged':
-      return 'red';
-    case 'clean':
-      return 'teal';
-    default:
-      return 'gray';
-  }
-}
-
-function badgeText(status) {
-  if (!status) return 'Logged';
-  const s = status.toLowerCase();
-  if (s === 'leaked') return 'Prompt leaked';
-  if (s === 'blocked') return 'Blocked';
-  if (s === 'sanitized') return 'Sanitized';
-  if (s === 'clean') return 'Clean';
-  if (s === 'flagged') return 'Flagged';
-  return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 export default function AuditLog({ onSelectLog }) {
@@ -53,7 +26,7 @@ export default function AuditLog({ onSelectLog }) {
     setError(null);
     try {
       const isFlaggedOnly = currentFilter === 'flagged';
-      const data = await fetchAuditLogs({ flagged_only: isFlaggedOnly });
+      const data = await fetchAuditLogs({ flagged_only: isFlaggedOnly, limit: 50 });
       setLogs(data.logs || []);
     } catch (err) {
       console.error('Failed to fetch audit logs:', err);
@@ -115,7 +88,7 @@ export default function AuditLog({ onSelectLog }) {
       <div className="pagehead">
         <div>
           <h1>Audit log</h1>
-          <div className="sub">Every query, retrieval, and generation — timestamped and exportable</div>
+          <div className="sub">Newest 50 events — timestamped; the CSV export is separate</div>
         </div>
         <button
           type="button"
@@ -148,7 +121,7 @@ export default function AuditLog({ onSelectLog }) {
           data-filter="flagged"
           onClick={() => handleFilterChange('flagged')}
         >
-          Flagged only
+          Non-clean only
         </button>
       </div>
 
@@ -220,8 +193,8 @@ export default function AuditLog({ onSelectLog }) {
                     <td className="source">{log.source_document || '—'}</td>
                     <td className="sim">{simScore}</td>
                     <td>
-                      <span className={`badge ${badgeColor(log.final_status)}`}>
-                        {badgeText(log.final_status)}
+                      <span className={`badge ${statusColor(log.final_status)}`}>
+                        {log.final_status ? statusLabel(log.final_status) : 'Logged'}
                       </span>
                     </td>
                   </tr>

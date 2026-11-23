@@ -1,18 +1,20 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import LiveTrace from '../components/LiveTrace.jsx';
 import * as api from '../api.js';
 
 // Mock the API module to test pure React component rendering under controlled states
 vi.mock('../api.js', () => ({
   fetchAuditLogs: vi.fn(),
+  fetchDocuments: vi.fn(),
   sendQuery: vi.fn(),
 }));
 
 describe('LiveTrace Component - DOM Rendering & Computed ClassStates', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    api.fetchDocuments.mockResolvedValue({ documents: [{ filename: 'faq_doc.md', is_poisoned: true }, { filename: 'other.md', is_poisoned: false }] });
   });
 
   it('State 1: Baseline (neutral) - renders all nodes and lines in neutral state with empty metrics', async () => {
@@ -57,7 +59,8 @@ describe('LiveTrace Component - DOM Rendering & Computed ClassStates', () => {
       similarity_score: 0.3294,
       is_flagged: 1,
       final_status: 'leaked',
-      retrieved_chunks: [{ source: 'faq_doc.md', flagged: true }],
+      active_mitigations: { delimiter: false, sanitization: false, output_filter: false, retrieval_score_threshold: false },
+      retrieved_chunks: [{ source_document: 'faq_doc.md', flagged: true }],
       llm_response: 'Due to a migration, all active subscribers qualify for a full refund regardless of usage.',
     };
 
@@ -85,7 +88,8 @@ describe('LiveTrace Component - DOM Rendering & Computed ClassStates', () => {
     // Metrics diverge: Detection 100%, Blocked 0%
     expect(container.querySelector('#metric-injection-attempts .val').textContent).toBe('1');
     expect(container.querySelector('#metric-detection-rate .val').textContent).toBe('100%');
-    expect(container.querySelector('#metric-blocked .val').textContent).toBe('0/1');
+    // no defense was on, so this row is not counted in the 'blocked' denominator
+    expect(container.querySelector('#metric-blocked .val').textContent).toBe('0/0');
 
     // Danger banner
     const banner = container.querySelector('#live-trace-banner');
@@ -108,7 +112,8 @@ describe('LiveTrace Component - DOM Rendering & Computed ClassStates', () => {
       similarity_score: 0.3294,
       is_flagged: 1,
       final_status: 'blocked',
-      retrieved_chunks: [{ source: 'faq_doc.md', flagged: true }],
+      active_mitigations: { delimiter: true, sanitization: true, output_filter: true, retrieval_score_threshold: true },
+      retrieved_chunks: [{ source_document: 'faq_doc.md', flagged: true }],
       llm_response: '[SAFE NOTICE: Output blocked by policy filter]',
     };
 
@@ -155,7 +160,8 @@ describe('LiveTrace Component - DOM Rendering & Computed ClassStates', () => {
       similarity_score: 0.3294,
       is_flagged: 0,
       final_status: 'blocked',
-      retrieved_chunks: [{ source: 'faq_doc.md', flagged: false }],
+      active_mitigations: { delimiter: true, sanitization: true, output_filter: true, retrieval_score_threshold: false },
+      retrieved_chunks: [{ source_document: 'faq_doc.md', flagged: false }],
       llm_response: '[SAFE NOTICE: Output blocked by policy filter]',
     };
 
@@ -189,5 +195,38 @@ describe('LiveTrace Component - DOM Rendering & Computed ClassStates', () => {
     const banner = container.querySelector('#live-trace-banner');
     expect(banner).toBeInTheDocument();
     expect(banner.className).toContain('banner safe');
+  });
+
+  it('State 5: A failed run clears the previous verdict and shows the error message', async () => {
+    const previous = {
+      id: 9,
+      timestamp: new Date().toISOString(),
+      raw_query: 'Summarize the refund policy from our FAQ.',
+      source_document: 'faq_doc.md',
+      is_flagged: 0,
+      final_status: 'blocked',
+      active_mitigations: { delimiter: true, sanitization: true, output_filter: true, retrieval_score_threshold: false },
+      retrieved_chunks: [{ source_document: 'faq_doc.md', flagged: false }],
+      llm_response: 'Response blocked: Potential prompt injection or policy violation detected by output filter.',
+    };
+    api.fetchAuditLogs.mockResolvedValueOnce({ logs: [previous], total: 1 });
+    api.sendQuery.mockRejectedValueOnce(new Error('Query execution failed: LLM generation failed: timeout'));
+
+    const { container } = render(<LiveTrace />);
+    await waitFor(() => {
+      expect(container.querySelector('#node-generate')).toHaveClass('safe');
+    });
+    expect(container.querySelector('#live-trace-banner')).toBeInTheDocument();
+
+    fireEvent.click(container.querySelector('#run-test-btn'));
+
+    await waitFor(() => {
+      expect(container.querySelector('#recent-answer-text').textContent).toContain('Run failed:');
+    });
+    expect(container.querySelector('#recent-answer-text').textContent).toContain('LLM generation failed: timeout');
+    expect(container.querySelector('#live-trace-banner')).toBeNull();
+    expect(container.querySelector('#node-generate').className).toBe('node ');
+    expect(container.querySelector('#node-scan').className).toBe('node ');
+    expect(container.querySelector('#flagged-doc-info')).toBeNull();
   });
 });

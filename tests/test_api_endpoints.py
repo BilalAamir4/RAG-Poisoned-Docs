@@ -204,5 +204,4 @@ def test_08_test_runs_endpoint():
     assert "by_technique" in data
     assert "unmitigated" in data["by_technique"]
     assert "delimiter_alone" in data["by_technique"]
-    assert "ablation_matrix" in data
-    assert len(data["ablation_matrix"]) == 16
+    assert "ablation_matrix" not in data  # hardcoded baseline removed in Phase 2

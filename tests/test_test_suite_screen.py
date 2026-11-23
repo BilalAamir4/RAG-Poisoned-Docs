@@ -114,8 +114,7 @@ def test_04_api_test_runs_endpoints():
         assert tech_key in by_tech, f"Technique {tech_key} missing from by_technique breakdown"
         assert "block_rate_pct" in by_tech[tech_key]
 
-    assert "ablation_matrix" in data
-    assert len(data["ablation_matrix"]) == 16
+    assert "ablation_matrix" not in data  # hardcoded baseline removed in Phase 2
 
 
 def test_05_real_promptfoo_output_and_traceability():

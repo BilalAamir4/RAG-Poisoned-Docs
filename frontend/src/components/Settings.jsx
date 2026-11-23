@@ -156,7 +156,7 @@ export default function Settings() {
       setResetMessage({
         type: 'safe',
         text: res?.message || 'Vector store re-indexed and SQLite audit logs cleared.',
-        details: `${res?.documents_indexed || 7} baseline documents indexed · ${res?.logs_cleared ?? 0} logs cleared`,
+        details: `${res?.documents_indexed ?? '?'} baseline documents indexed · ${res?.logs_cleared ?? 0} logs cleared`,
       })
 
       // Reload settings state
@@ -384,7 +384,7 @@ export default function Settings() {
           <div>
             <div className="title">Reset demo data</div>
             <div className="desc">
-              Clears the audit log and restores the document set to its original, unpoisoned state.
+              Restores the baseline documents (including the poisoned one) and clears the audit log.
             </div>
           </div>
           <button

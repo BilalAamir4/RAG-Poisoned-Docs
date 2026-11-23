@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { fetchTestRuns, runTestSuite } from '../api.js'
+import { statusColor, statusLabel } from '../status.js'
 
 export default function TestSuiteResults({ onSelectLog }) {
   const [data, setData] = useState(null)
@@ -150,7 +151,9 @@ export default function TestSuiteResults({ onSelectLog }) {
           <div className="flex items-center gap-3 text-xs text-muted font-mono">
             {pfMeta ? (
               <>
-                <span>Model: {pfMeta.model}</span>
+                <span>Model: {String(pfMeta.model || '').replace(/^openai:chat:/, '')}</span>
+                <span>•</span>
+                <span>Run: {(String(pfMeta.eval_id || '').match(/(\d{4}-\d{2}-\d{2})T([\d:]{8})/) || []).slice(1).join(' ') || 'date unavailable'} UTC</span>
                 <span>•</span>
                 <span>Eval: {pfMeta.eval_id}</span>
               </>
@@ -249,7 +252,6 @@ export default function TestSuiteResults({ onSelectLog }) {
               <tbody>
                 {trials.map((trial) => {
                   const mits = trial.mitigations || {}
-                  const isLeaked = trial.outcome === 'LEAKED'
 
                   return (
                     <tr key={trial.trial_num} data-testid={`trial-row-${trial.trial_num}`}>
@@ -293,13 +295,12 @@ export default function TestSuiteResults({ onSelectLog }) {
                         )}
                       </td>
                       <td>
-                        {isLeaked ? (
-                          <span className="badge red">LEAKED</span>
-                        ) : (
-                          <span className="badge teal">BLOCKED</span>
-                        )}
+                        <span className={`badge ${statusColor(trial.final_status)}`}>
+                          {trial.final_status ? statusLabel(trial.final_status) : trial.outcome || 'Unknown'}
+                        </span>
                       </td>
                       <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                        {trial.audit_id != null && (
                         <button
                           className="text-xs text-violet hover:underline font-mono"
                           onClick={() => {
@@ -315,6 +316,7 @@ export default function TestSuiteResults({ onSelectLog }) {
                         >
                           View trace →
                         </button>
+                        )}
                       </td>
                     </tr>
                   )

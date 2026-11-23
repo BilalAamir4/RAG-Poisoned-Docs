@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { fetchSettings, updateSettings, sendQuery } from '../api.js'
+import { fetchSettings, sendQuery } from '../api.js'
+import { defensesOnCount } from '../status.js'
 
 /**
  * Extracts distinct, readable citation chips from retrieved chunks metadata.
@@ -15,7 +16,6 @@ export function extractCitations(retrievedChunks) {
   for (let idx = 0; idx < retrievedChunks.length; idx++) {
     const chunk = retrievedChunks[idx]
     const docName = chunk.source_document || chunk.source || 'unknown'
-    const text = chunk.text || ''
 
     // Determine document type badge
     const lowerDoc = docName.toLowerCase()
@@ -29,26 +29,10 @@ export function extractCitations(retrievedChunks) {
       badge = 'DOC'
     }
 
-    // Try to extract section or page information from markdown headings
-    let sectionLabel = ''
-    const secMatch = text.match(/(?:^|\n)##\s*(\d+)?\.?\s*([^\n\r]+)/)
-    if (secMatch) {
-      if (secMatch[1]) {
-        sectionLabel = `section ${secMatch[1]}`
-      } else {
-        const title = secMatch[2].trim().slice(0, 30)
-        sectionLabel = title
-      }
-    } else {
-      const anyHead = text.match(/(?:^|\n)#+\s*([^\n\r]+)/)
-      if (anyHead) {
-        sectionLabel = anyHead[1].trim().slice(0, 30)
-      } else {
-        sectionLabel = `chunk ${idx + 1}`
-      }
-    }
-
-    const label = `${docName} — ${sectionLabel}`
+    // No invented sections: identify the chunk by its rank in this retrieval, plus its similarity score.
+    const score = typeof chunk.similarity_score === 'number' ? chunk.similarity_score : null
+    const rank = `chunk ${idx + 1} of ${retrievedChunks.length}`
+    const label = `${docName} — ${rank}`
     const key = `${badge}:${label}`
 
     if (!seen.has(key)) {
@@ -58,7 +42,8 @@ export function extractCitations(retrievedChunks) {
         badge,
         label,
         docName,
-        section: sectionLabel,
+        section: rank,
+        score,
       })
     }
   }
@@ -150,31 +135,25 @@ export default function Chat() {
   const [messages, setMessages] = useState([])
   const [inputQuery, setInputQuery] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [isMitigationActive, setIsMitigationActive] = useState(false)
-  const [isUpdatingToggle, setIsUpdatingToggle] = useState(false)
+  const [defensesOn, setDefensesOn] = useState(null) // real Settings state, read-only here
   const [error, setError] = useState(null)
   const threadEndRef = useRef(null)
 
-  // Load initial mitigation state from backend settings
+  // Read the real Settings state (display only; Chat never writes settings)
   const loadSettings = async () => {
     try {
       const data = await fetchSettings()
       const m = data?.mitigations || data?.active_mitigations
-      const active = m
-        ? Boolean(m.delimiter || m.sanitization || m.output_filter || m.output_filtering || m.retrieval_score_threshold)
-        : false
-      setIsMitigationActive(active)
+      setDefensesOn(m ? defensesOnCount(m) : null)
     } catch (err) {
       console.error('Failed to load settings in Chat header:', err)
+      setDefensesOn(null)
     }
   }
 
   useEffect(() => {
     loadSettings()
-    const handleMitigationChange = (e) => {
-      if (e?.detail?.source === 'chat-header') return
-      loadSettings()
-    }
+    const handleMitigationChange = () => loadSettings()
     window.addEventListener('mitigation-settings-changed', handleMitigationChange)
     return () => {
       window.removeEventListener('mitigation-settings-changed', handleMitigationChange)
@@ -187,35 +166,6 @@ export default function Chat() {
       threadEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }, [messages, isLoading])
-
-  // Toggle mitigation state from header toggle
-  // Per spec: changes mitigation state for the NEXT query only without modifying thread history
-  const handleToggleMitigation = async () => {
-    if (isUpdatingToggle) return
-    const nextState = !isMitigationActive
-    setIsUpdatingToggle(true)
-    setIsMitigationActive(nextState)
-
-    try {
-      const updated = await updateSettings({
-        delimiter: nextState,
-        sanitization: nextState,
-        output_filter: nextState,
-        retrieval_score_threshold: nextState,
-      })
-      window.dispatchEvent(
-        new CustomEvent('mitigation-settings-changed', {
-          detail: { source: 'chat-header', mitigations: updated?.mitigations },
-        })
-      )
-    } catch (err) {
-      console.error('Failed to update mitigation settings from Chat toggle:', err)
-      // Revert on failure
-      setIsMitigationActive(!nextState)
-    } finally {
-      setIsUpdatingToggle(false)
-    }
-  }
 
   // Handle user query submission
   const handleSend = async (e) => {
@@ -235,15 +185,8 @@ export default function Chat() {
     setError(null)
 
     try {
-      const payload = {
-        query: trimmed,
-        mitigations: {
-          delimiter: isMitigationActive,
-          sanitization: isMitigationActive,
-          output_filter: isMitigationActive,
-          retrieval_score_threshold: isMitigationActive,
-        },
-      }
+      // No per-query override: the backend applies the real Settings state
+      const payload = { query: trimmed }
 
       const result = await sendQuery(payload)
       const citations = extractCitations(result.retrieved_chunks)
@@ -257,7 +200,7 @@ export default function Chat() {
         banner,
         final_status: result.final_status,
         is_flagged: result.is_flagged,
-        mitigations_used: { ...payload.mitigations },
+        mitigations_used: result.active_mitigations,
       }
 
       setMessages((prev) => [...prev, aiMessage])
@@ -285,23 +228,15 @@ export default function Chat() {
           <h1>Chat</h1>
           <div className="sub">Ask questions grounded in your knowledge base</div>
         </div>
-        <div className="toggle-row" style={{ gap: '8px' }}>
-          <span className="state" id="chatToggleState">
-            Mitigation: {isMitigationActive ? 'On' : 'Off'}
-          </span>
-          <div
-            className={`toggle ${isMitigationActive ? 'on' : 'off'} ${
-              isUpdatingToggle ? 'opacity-60 cursor-wait' : ''
-            }`}
-            id="chatToggle"
-            onClick={handleToggleMitigation}
-            role="button"
-            tabIndex={0}
-            title={`Mitigation: ${isMitigationActive ? 'On' : 'Off'} (Click to toggle)`}
-          >
-            <div className="knob" />
-          </div>
-        </div>
+        <a
+          href="#/settings"
+          className="state"
+          id="chatToggleState"
+          title="Defenses come from Settings. Click to change them there."
+          style={{ textDecoration: 'none' }}
+        >
+          Defenses: {defensesOn === null ? '—' : `${defensesOn} of 4 on`}
+        </a>
       </div>
 
       <div className="chatwrap">
@@ -349,7 +284,7 @@ export default function Chat() {
                         {msg.citations.map((cite, cIdx) => (
                           <div key={cIdx} className="citechip">
                             <span className={`filetag ${cite.type}`}>{cite.badge}</span>
-                            <span>{cite.label}</span>
+                            <span>{cite.label}{cite.score !== null && cite.score !== undefined ? ` · ${cite.score.toFixed(2)}` : ''}</span>
                           </div>
                         ))}
                       </div>

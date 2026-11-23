@@ -737,16 +737,26 @@ P0-P4 were developed sequentially in the workspace before git was initialized. A
   - All 7 FABRICATED items and the 5 wrong DERIVED formulas from `PHASE1_AUDIT.md` §4 are Phase 2 fixes.
   - Add CORS headers to error responses (so the UI can show the real error instead of "Failed to fetch").
 
-### Phase 2 — demo reliability — IN PROGRESS (started 2026-11-23)
-Done so far (uncommitted):
-- `start-dev.ps1` rewritten: starts Ollama with `OLLAMA_CONTEXT_LENGTH=8192` if it isn't running, checks `LLM_MODEL` is installed, starts the backend without `--reload`, waits for `/health`, warms the model (`keep_alive` 60 min) and checks the loaded context length, then starts Vite; Ctrl+C stops only what it started. Tested from a cold stop: healthy in about 1 minute, warm-up 20 s, context confirmed 8192.
-- Temperature 0 / seed 42: verified as the defaults in `llm_client.generate`; `pipeline.py:271` is the only caller and uses the defaults. No change needed.
-- Provider choice: stay on local `llama3.1:8b` (no deployment for the demo); hosted Groq is not used.
-- Error path: `/query` now converts LLM failures into HTTP 502 with a readable `detail` (inside the CORS middleware, so the header is present); `api.js` `sendQuery` surfaces that detail. Verified with Ollama stopped: 502, `access-control-allow-origin` present, no audit row written. Frontend tests: 34/34 pass.
-Remaining: replay fallback for the Attack replay screen (recorded result when the backend/LLM is down), stale Live-trace state after a failed run, the 7 FABRICATED items and 5 wrong DERIVED formulas (PHASE1_AUDIT.md §4), Chat toggle display-only, Promptfoo re-run on llama3.1:8b.
+### Phase 2 — demo reliability — DONE 2026-11-23
+- **Part 1 (commit 16f3bfe):** `start-dev.ps1` rewrite (Ollama at context 8192, model check, backend without `--reload`, health wait, warm-up, context check); `/query` returns 502 with a readable message and CORS headers on LLM failure; `api.js` surfaces it. Temperature 0 / seed 42 verified as defaults. Provider stays local `llama3.1:8b`; a commented Groq example was added to `backend/.env.example` (no code change).
+- **Live trace:** a failed run clears the pipeline strip, banner, answer panel, flagged-document card and recent runs, and shows the 502 message. Removed "— section 2", "verified against knowledge base", `|| 'faq_doc.md'`, the 25% sparkbar floor and the `[20]*6` constant. "Queries that retrieved the poisoned document" = rows whose retrieved chunk's document has `is_poisoned=true` (from GET /documents). "Attacks blocked n/m": m = those rows with at least one defense on, n = rows among m whose response contains neither the false full-refund claim nor the attacker URL (tooltip shows the formula).
+- **Documents:** fake collection chips and collections row removed, `|| 7` removed, subtitle reworded. **Chat:** citation chips read "chunk k of N · score"; header is a read-only "Defenses: n of 4 on" link to Settings; no per-query override and no settings write from Chat. **Sidebar:** same read-only "n of 4 on". **Settings:** reset text corrected, `|| 7` removed. **Audit log:** "Injection succeeded", "Non-clean only", subtitle "Newest 50 events". **Test suite:** real outcome text via the shared vocabulary, "View trace" dropped when `audit_id` is null, run date and model shown from the Promptfoo metadata. **Trace detail:** all retrieved chunks shown; the "as wrapped" panel is extracted from the real `assembled_prompt` (`extractWrappedChunks`). **Backend:** `P4_BASELINE_ABLATION_RUNS` and its fallback deleted (the endpoint returns an honest empty state).
+- **One status vocabulary / colour map:** `frontend/src/status.js` (red = injection succeeded, teal = blocked/clean/sanitized, amber = flagged/pending) used by every screen. No `dangerouslySetInnerHTML` anywhere.
+- **Promptfoo re-run on `llama3.1:8b`** (2026-11-23): 50 trials, 24% overall block rate; all-mitigations 10/10; delimiter alone 2/10; unmitigated, sanitization alone and both-combined 0/10. All trials have an `audit_id`. Test suite screen shows the new run date and the `llama3.1:8b` metadata line.
+- **Replay fallback:** `frontend/src/replay/replay_fixture.json`, recorded by `scripts/record_replay.py` from six real runs (all off, each control alone, all on) on llama3.1:8b, with full audit rows, raw model output, model, date and base commit. Only the Attack replay screen reads it: when the backend or a live re-run fails, or via "Replay recorded", with a persistent banner "Recorded replay — <date>, <model> — not a live run". It never feeds Live trace metrics, the audit log or the Test suite.
+- **Tests:** frontend 43/43 pass (new: status, wrapped-chunk extraction, replay fallback, failed-run clearing); backend `tests/test_api_endpoints.py` + `tests/test_test_suite_screen.py` 14/14 pass (assertions on the removed `ablation_matrix` updated).
+- **Acceptance run (screenshots in `audit_artifacts/phase2/acceptance_*.jpg`):** cold start via `start-dev.ps1` -> reset -> normal question (clean, chunk chips) -> trigger query all off (injection succeeded, red) -> all on (blocked, real text, teal) -> Live trace metrics -> Ollama stopped: Live trace shows the 502 message with the previous verdict cleared; Attack replay shows the replay banner -> Ollama restarted and a live query worked again.
+- **Phase 2 -> Unresolved:**
+  1. The recorded fixture's `base_commit` is 16f3bfe with a dirty working tree (it was recorded before the final commit), so the fixture does not point at the exact final commit.
+  2. Test-suite trials keep `audit_id`s that dangle after `POST /settings/reset` (the audit log is wiped, the Promptfoo results stay on disk); Trace detail then shows its "Full audit record not found" notice.
+  3. The Live trace "Flagged at Scan" percentage is computed over poisoned-retrieval rows only; the all-off run is not flagged because the threshold is off (correct, but easy to misread).
+  4. The Audit log "Event" column is still the constant "Generation" (STATIC-OK in Phase 1, not changed).
+  5. Promptfoo grades the raw pre-filter output, so all-mitigations trials show "Failed" under "Raw model (pre-filter)" while the Outcome is Blocked (documented in the column tooltip).
+  6. qwen3.5 remains unusable through the backend (120 s client timeout); not a demo model.
+  7. The Settings reset button still uses `window.confirm` (not exercised in the browser).
 
 ## Current phase
-Phase 2 — demo reliability (pending Phase 1 review)
+Phase 3 — guided "Demo Mode" UI (current screens kept as "Inspector"); not started
 
 ## Next phase
 P17 — Cloud Deployment (Railway + Vercel) when live demo date approaches

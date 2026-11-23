@@ -21,7 +21,7 @@ function getFileTagClass(type) {
 function getStatusBadge(doc) {
   const status = doc.status || (doc.is_poisoned ? 'Flagged pattern' : 'Indexed')
   if (status === 'Flagged pattern') {
-    return <span className="badge red">Flagged pattern</span>
+    return <span className="badge amber">Flagged pattern</span>
   }
   if (status === 'Processing') {
     return <span className="badge amber">Processing</span>
@@ -37,7 +37,6 @@ export default function Documents() {
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [banner, setBanner] = useState(null)
-  const [activeCollection, setActiveCollection] = useState('product')
   const [isDragOver, setIsDragOver] = useState(false)
   const fileInputRef = useRef(null)
 
@@ -135,7 +134,7 @@ export default function Documents() {
         <div>
           <h1>Documents</h1>
           <div className="sub">
-            Everything Sentinel can retrieve from, grouped into collections
+            Every document in the knowledge base that Sentinel can retrieve from
           </div>
         </div>
         <button
@@ -181,42 +180,6 @@ export default function Documents() {
           <span>{banner.message}</span>
         </div>
       )}
-
-      {/* Collection chips row */}
-      <div className="collection-row">
-        <div
-          className={`collection-chip ${activeCollection === 'product' ? 'active' : ''}`}
-          onClick={() => setActiveCollection('product')}
-          role="button"
-          tabIndex={0}
-        >
-          Product docs · {documents.length || 7}
-        </div>
-        <div
-          className={`collection-chip ${activeCollection === 'legal' ? 'active' : ''}`}
-          onClick={() => setActiveCollection('legal')}
-          role="button"
-          tabIndex={0}
-        >
-          Legal contracts · 42
-        </div>
-        <div
-          className={`collection-chip ${activeCollection === 'support' ? 'active' : ''}`}
-          onClick={() => setActiveCollection('support')}
-          role="button"
-          tabIndex={0}
-        >
-          Support tickets · 356
-        </div>
-        <div
-          className={`collection-chip ${activeCollection === 'meeting' ? 'active' : ''}`}
-          onClick={() => setActiveCollection('meeting')}
-          role="button"
-          tabIndex={0}
-        >
-          Meeting notes · 89
-        </div>
-      </div>
 
       {/* Document Grid */}
       <div className="doc-grid" data-testid="doc-grid">
@@ -270,7 +233,7 @@ export default function Documents() {
                 <strong style={{ color: 'var(--text-secondary)' }}>
                   Drag files here
                 </strong>{' '}
-                or browse to add them to this collection
+                or browse to add them to the knowledge base
               </>
             )}
           </div>

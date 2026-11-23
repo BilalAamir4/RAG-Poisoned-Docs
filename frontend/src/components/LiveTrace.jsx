@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { fetchAuditLogs, sendQuery } from '../api.js';
+import { fetchAuditLogs, sendQuery, fetchDocuments } from '../api.js';
+import { statusColor, statusLabel, BANNER_CLASS, responseLeaks, defensesOnCount } from '../status.js';
 import Counter from './ui/Counter.jsx';
 import AnimatedList from './ui/AnimatedList.jsx';
 
@@ -15,32 +16,10 @@ function formatTime(isoString) {
   }
 }
 
-function capitalize(str) {
-  if (!str) return '';
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-function badgeColor(status) {
-  const s = status?.toLowerCase();
-  if (s === 'leaked') return 'red';
-  if (s === 'blocked' || s === 'sanitized') return 'teal';
-  if (s === 'flagged') return 'amber';
-  return 'gray';
-}
-
-function isInjectionAttempt(log) {
-  if (!log) return false;
-  if (log.is_flagged === 1 || log.is_flagged === true) return true;
-  if (log.source_document === 'faq_doc.md') return true;
-  const status = log.final_status?.toLowerCase();
-  if (['flagged', 'sanitized', 'blocked', 'leaked'].includes(status)) return true;
-  if (log.raw_query?.toLowerCase().includes('refund policy')) return true;
-  if (Array.isArray(log.retrieved_chunks)) {
-    return log.retrieved_chunks.some(
-      (c) => (c.source || c.metadata?.source_document || c.source_document || '').includes('faq_doc.md') || c.flagged
-    );
-  }
-  return false;
+// Rows whose retrieved chunks include a document the backend marks is_poisoned (GET /documents).
+function touchesPoisoned(log, poisoned) {
+  if (!log || !poisoned || !Array.isArray(log.retrieved_chunks)) return false;
+  return log.retrieved_chunks.some((c) => poisoned.has(c.source_document));
 }
 
 function isScanDetected(log) {
@@ -51,23 +30,18 @@ function isScanDetected(log) {
 }
 
 function computeSparkbars(logs) {
-  if (!logs || logs.length === 0) {
-    return [20, 20, 20, 20, 20, 20];
-  }
-  const now = new Date();
   const bucketCounts = [0, 0, 0, 0, 0, 0];
+  if (!logs || logs.length === 0) return bucketCounts;
+  const now = new Date();
   logs.forEach((l) => {
-    try {
-      const t = new Date(l.timestamp).getTime();
-      const diffHours = (now.getTime() - t) / (1000 * 60 * 60);
-      const bucketIdx = 5 - Math.min(5, Math.max(0, Math.floor(diffHours)));
-      bucketCounts[bucketIdx] += 1;
-    } catch {
-      bucketCounts[5] += 1;
-    }
+    const diffHours = (now.getTime() - new Date(l.timestamp).getTime()) / (1000 * 60 * 60);
+    if (Number.isNaN(diffHours)) return;
+    const bucketIdx = 5 - Math.min(5, Math.max(0, Math.floor(diffHours)));
+    bucketCounts[bucketIdx] += 1;
   });
   const maxBucket = Math.max(...bucketCounts, 1);
-  return bucketCounts.map((c) => Math.max(25, Math.round((c / maxBucket) * 100)));
+  // Empty hours stay empty (0%); no height floor.
+  return bucketCounts.map((c) => Math.round((c / maxBucket) * 100));
 }
 
 export default function LiveTrace({ onSelectLog }) {
@@ -75,6 +49,7 @@ export default function LiveTrace({ onSelectLog }) {
   const [loading, setLoading] = useState(false);
   const [isRunningTest, setIsRunningTest] = useState(false);
   const [error, setError] = useState(null);
+  const [poisoned, setPoisoned] = useState(null); // Set of is_poisoned filenames from GET /documents
 
   const loadData = useCallback(async () => {
     try {
@@ -82,6 +57,12 @@ export default function LiveTrace({ onSelectLog }) {
       // Promptfoo evaluation trials are shown on Test suite, not counted as live pipeline activity
       const data = await fetchAuditLogs({ limit: 50, exclude_source: 'promptfoo' });
       setLogs(data.logs || []);
+      try {
+        const docs = await fetchDocuments();
+        setPoisoned(new Set((docs.documents || []).filter((d) => d.is_poisoned).map((d) => d.filename)));
+      } catch {
+        setPoisoned(null);
+      }
     } catch (err) {
       console.error('Failed to load audit logs:', err);
       setError(err.message);
@@ -109,7 +90,8 @@ export default function LiveTrace({ onSelectLog }) {
   };
 
   // Derive metrics strictly from real GET /audit-log entries
-  const latestRun = logs.length > 0 ? logs[0] : null;
+  // After a failed run/load, never leave a previous run's verdict on screen
+  const latestRun = !error && logs.length > 0 ? logs[0] : null;
 
   const now = new Date();
   const todayDateStr = now.toISOString().slice(0, 10);
@@ -118,19 +100,14 @@ export default function LiveTrace({ onSelectLog }) {
 
   const sparkbarHeights = computeSparkbars(logs);
 
-  const injectionAttempts = logs.filter(isInjectionAttempt).length;
-  const blockedCount = logs.filter(
-    (l) => isInjectionAttempt(l) && (l.final_status === 'blocked' || l.final_status === 'sanitized')
-  ).length;
+  // Queries that retrieved the poisoned document (backend is_poisoned field, not a filename match)
+  const poisonedRows = logs.filter((l) => touchesPoisoned(l, poisoned));
+  const injectionAttempts = poisonedRows.length;
+  // m = those rows with at least one defense on; n = rows among m whose response has no false claim / attacker URL
+  const defendedRows = poisonedRows.filter((l) => defensesOnCount(l.active_mitigations) > 0);
+  const blockedCount = defendedRows.filter((l) => !responseLeaks(l.llm_response)).length;
 
-  const detectedCount = logs.filter(
-    (l) => isInjectionAttempt(l) && isScanDetected(l)
-  ).length;
-
-  const detectionRate =
-    injectionAttempts > 0
-      ? `${Math.round((detectedCount / injectionAttempts) * 100)}%`
-      : '—';
+  const detectedCount = poisonedRows.filter(isScanDetected).length;
 
   // Derive horizontal pipeline states
   const isFlagged = latestRun ? isScanDetected(latestRun) : false;
@@ -161,23 +138,20 @@ export default function LiveTrace({ onSelectLog }) {
   }
 
   // Derive flagged document info
-  const flaggedLog = logs.find(isScanDetected);
-
+  const flaggedLog = error ? null : logs.find(isScanDetected);
+  const flaggedChunk = flaggedLog?.retrieved_chunks?.find((c) => c.flagged);
   const flaggedDoc = flaggedLog
-    ? {
-        name: flaggedLog.source_document || 'faq_doc.md',
-        section: 'section 2',
-      }
+    ? { name: flaggedChunk?.source_document || flaggedLog.source_document || 'unknown document' }
     : null;
 
-  const recentRuns = logs.slice(0, 5);
+  const recentRuns = error ? [] : logs.slice(0, 5);
 
   const renderBanner = (run) => {
     if (!run) return null;
     const status = run.final_status?.toLowerCase();
     if (status === 'leaked') {
       return (
-        <div className="banner danger" id="live-trace-banner">
+        <div className={`banner ${BANNER_CLASS[statusColor('leaked')]}`} id="live-trace-banner">
           <svg className="icon" viewBox="0 0 24 24">
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
             <line x1="12" y1="9" x2="12" y2="13" />
@@ -216,7 +190,7 @@ export default function LiveTrace({ onSelectLog }) {
             <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
             <path d="M9 12l2 2 4-4" />
           </svg>
-          Clean response — verified against knowledge base
+          Clean response
         </div>
       );
     }
@@ -358,7 +332,12 @@ export default function LiveTrace({ onSelectLog }) {
         </div>
 
         <div className="card" id="metric-injection-attempts">
-          <div className="lbl">Injection attempts</div>
+          <div
+            className="lbl"
+            title="Rows in the last 50 audit entries where any retrieved chunk's document has is_poisoned=true (GET /documents)."
+          >
+            Queries that retrieved the poisoned document
+          </div>
           <div
             className="val"
             style={{ color: injectionAttempts > 0 ? 'var(--red)' : 'var(--text-primary)' }}
@@ -368,12 +347,17 @@ export default function LiveTrace({ onSelectLog }) {
         </div>
 
         <div className="card" id="metric-blocked">
-          <div className="lbl">Attacks blocked</div>
+          <div
+            className="lbl"
+            title="m = those poisoned-retrieval rows with at least one defense on. n = rows among m whose final response contains neither the false full-refund claim nor the attacker URL."
+          >
+            Attacks blocked
+          </div>
           <div
             className="val"
             style={{ color: blockedCount > 0 ? 'var(--teal)' : 'var(--text-primary)' }}
           >
-            <Counter value={blockedCount} fontSize={18} />/{injectionAttempts}
+            <Counter value={blockedCount} fontSize={18} />/{defendedRows.length}
           </div>
         </div>
 
@@ -401,11 +385,13 @@ export default function LiveTrace({ onSelectLog }) {
         {/* Left Column: Recent Query / Answer Card */}
         <div className="card" id="recent-query-card">
           <div className="bubble-user" id="recent-query-text">
-            {latestRun ? latestRun.raw_query : 'No queries executed yet.'}
+            {latestRun ? latestRun.raw_query : error ? '—' : 'No queries executed yet.'}
           </div>
           <div className="answer-text" id="recent-answer-text">
             {latestRun
               ? latestRun.llm_response
+              : error
+              ? `Run failed: ${error}`
               : 'Click "Run test" above to execute the P1 indirect prompt injection query against the live pipeline.'}
           </div>
           {renderBanner(latestRun)}
@@ -424,7 +410,6 @@ export default function LiveTrace({ onSelectLog }) {
               <div className="flagged-doc" id="flagged-doc-info">
                 <span className="dot"></span>
                 <span>{flaggedDoc.name}</span>
-                <span style={{ color: 'var(--text-muted)' }}>— {flaggedDoc.section}</span>
               </div>
             ) : (
               <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
@@ -456,8 +441,8 @@ export default function LiveTrace({ onSelectLog }) {
                       style={{ cursor: onSelectLog ? 'pointer' : 'default' }}
                     >
                       <span className="t">{formatTime(run.timestamp)}</span>
-                      <span className={`badge ${badgeColor(run.final_status)}`}>
-                        {capitalize(run.final_status)}
+                      <span className={`badge ${statusColor(run.final_status)}`}>
+                        {statusLabel(run.final_status)}
                       </span>
                     </div>
                   )}

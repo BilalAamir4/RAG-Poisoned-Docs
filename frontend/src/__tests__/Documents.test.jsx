@@ -53,13 +53,13 @@ describe('Documents Component — DOM Rendering, Warn Border & Upload Acceptance
     vi.clearAllMocks()
   })
 
-  it('State 1: Initial Render — displays header, collection chips, dropzone, and document cards', async () => {
+  it('State 1: Initial Render — displays header, dropzone, and document cards', async () => {
     api.fetchDocuments.mockResolvedValueOnce(MOCK_DOCUMENTS_BASELINE)
 
     render(<Documents />)
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Documents')
-    expect(screen.getByText(/Everything Sentinel can retrieve from/i)).toBeInTheDocument()
+    expect(screen.getByText(/Every document in the knowledge base/i)).toBeInTheDocument()
 
     await waitFor(() => {
       expect(screen.getByTestId('doc-grid')).toBeInTheDocument()
@@ -72,6 +72,9 @@ describe('Documents Component — DOM Rendering, Warn Border & Upload Acceptance
     expect(screen.getByText('1.8 KB')).toBeInTheDocument()
     expect(screen.getByText('faq_doc.md')).toBeInTheDocument()
     expect(screen.getByText('3.4 KB')).toBeInTheDocument()
+
+    // No fabricated collection chips
+    expect(screen.queryByText(/Legal contracts|Support tickets|Meeting notes/)).toBeNull()
 
     // Assert dropzone exists
     const dropzone = screen.getByTestId('dropzone')
@@ -119,7 +122,7 @@ describe('Documents Component — DOM Rendering, Warn Border & Upload Acceptance
     expect(poisonedCard.className).toContain('warn')
     expect(poisonedCard.getAttribute('data-warn')).toBe('true')
     const poisonedBadge = poisonedCard.querySelector('.badge')
-    expect(poisonedBadge.className).toContain('badge red')
+    expect(poisonedBadge.className).toContain('badge amber')
     expect(poisonedBadge).toHaveTextContent('Flagged pattern')
 
     // Clean faq card (is_poisoned: false) must NOT have "warn" class even though filename is "faq_doc.md"

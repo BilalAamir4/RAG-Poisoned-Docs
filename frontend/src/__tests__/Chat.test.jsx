@@ -97,7 +97,7 @@ describe('Chat Component — DOM Rendering, State Transitions & Acceptance Test'
     vi.clearAllMocks()
   })
 
-  it('State 1: Initial Render — displays header, neutral toggle state, and empty prompt area', async () => {
+  it('State 1: Initial Render — displays header, read-only defenses display, and empty prompt area', async () => {
     api.fetchSettings.mockResolvedValueOnce({
       mitigations: {
         delimiter: false,
@@ -115,12 +115,12 @@ describe('Chat Component — DOM Rendering, State Transitions & Acceptance Test'
     ).toBeInTheDocument()
 
     await waitFor(() => {
-      const toggle = container.querySelector('#chatToggle')
-      const toggleState = container.querySelector('#chatToggleState')
-      expect(toggle).toBeInTheDocument()
-      expect(toggle.className).toContain('toggle off')
-      expect(toggleState.textContent).toBe('Mitigation: Off')
+      const state = container.querySelector('#chatToggleState')
+      expect(state.textContent).toBe('Defenses: 0 of 4 on')
+      expect(state.getAttribute('href')).toBe('#/settings')
     })
+    // Read-only display: no toggle control exists in Chat any more
+    expect(container.querySelector('#chatToggle')).toBeNull()
 
     const input = container.querySelector('#chat-input-field')
     const submitBtn = container.querySelector('#chat-submit-btn')
@@ -143,7 +143,7 @@ describe('Chat Component — DOM Rendering, State Transitions & Acceptance Test'
     const { container } = render(<Chat />)
 
     await waitFor(() => {
-      expect(container.querySelector('#chatToggle')).toHaveClass('off')
+      expect(container.querySelector('#chatToggleState').textContent).toBe('Defenses: 0 of 4 on')
     })
 
     const input = container.querySelector('#chat-input-field')
@@ -173,7 +173,8 @@ describe('Chat Component — DOM Rendering, State Transitions & Acceptance Test'
     const citerow = container.querySelector('.citerow')
     expect(citerow).toBeInTheDocument()
     const citechip = citerow.querySelector('.citechip')
-    expect(citechip.textContent).toContain('faq_doc.md — section 2')
+    expect(citechip.textContent).toContain('faq_doc.md — chunk 1 of 1')
+    expect(citechip.textContent).toContain('0.33')
     expect(citechip.querySelector('.filetag')).toHaveClass('doc')
 
     // Danger banner under unmitigated attack
@@ -182,58 +183,27 @@ describe('Chat Component — DOM Rendering, State Transitions & Acceptance Test'
     expect(dangerBanner.className).toBe('banner danger')
     expect(dangerBanner.textContent).toContain('Injected instruction followed')
 
-    // Verify api.sendQuery was called with mitigations OFF
-    expect(api.sendQuery).toHaveBeenCalledWith({
-      query: P1_TRIGGER_QUERY,
-      mitigations: {
-        delimiter: false,
-        sanitization: false,
-        output_filter: false,
-        retrieval_score_threshold: false,
-      },
-    })
+    // No per-query override: only the query is sent
+    expect(api.sendQuery).toHaveBeenCalledWith({ query: P1_TRIGGER_QUERY })
   })
 
-  it('State 3: Header Toggle Interaction — flips toggle state and calls updateSettings', async () => {
+  it('State 3: Display reflects the real Settings state (2 of 4 on) and Chat never writes settings', async () => {
     api.fetchSettings.mockResolvedValueOnce({
       mitigations: {
-        delimiter: false,
-        sanitization: false,
-        output_filter: false,
-        retrieval_score_threshold: false,
-      },
-    })
-    api.updateSettings.mockResolvedValueOnce({
-      mitigations: {
         delimiter: true,
-        sanitization: true,
+        sanitization: false,
         output_filter: true,
-        retrieval_score_threshold: true,
+        retrieval_score_threshold: false,
       },
     })
 
     const { container } = render(<Chat />)
 
     await waitFor(() => {
-      expect(container.querySelector('#chatToggle')).toHaveClass('off')
+      expect(container.querySelector('#chatToggleState').textContent).toBe('Defenses: 2 of 4 on')
     })
-
-    const toggle = container.querySelector('#chatToggle')
-    const toggleState = container.querySelector('#chatToggleState')
-
-    fireEvent.click(toggle)
-
-    await waitFor(() => {
-      expect(toggle.className).toContain('toggle on')
-      expect(toggleState.textContent).toBe('Mitigation: On')
-    })
-
-    expect(api.updateSettings).toHaveBeenCalledWith({
-      delimiter: true,
-      sanitization: true,
-      output_filter: true,
-      retrieval_score_threshold: true,
-    })
+    fireEvent.click(container.querySelector('#chatToggleState'))
+    expect(api.updateSettings).not.toHaveBeenCalled()
   })
 
   it('State 4: Two-Turn Acceptance Test (Before/After In Same Thread) — verifies danger & safe coexistence', async () => {
@@ -250,23 +220,13 @@ describe('Chat Component — DOM Rendering, State Transitions & Acceptance Test'
     // Query 1: Unmitigated attack leaks
     api.sendQuery.mockResolvedValueOnce(MOCK_LEAK_RESULT)
 
-    // Toggle update: Turn on
-    api.updateSettings.mockResolvedValueOnce({
-      mitigations: {
-        delimiter: true,
-        sanitization: true,
-        output_filter: true,
-        retrieval_score_threshold: true,
-      },
-    })
-
     // Query 2: Mitigated attack blocked
     api.sendQuery.mockResolvedValueOnce(MOCK_BLOCKED_RESULT)
 
     const { container } = render(<Chat />)
 
     await waitFor(() => {
-      expect(container.querySelector('#chatToggle')).toHaveClass('off')
+      expect(container.querySelector('#chatToggleState').textContent).toBe('Defenses: 0 of 4 on')
     })
 
     // Turn 1: Ask trigger query with mitigations OFF
@@ -283,14 +243,18 @@ describe('Chat Component — DOM Rendering, State Transitions & Acceptance Test'
     const firstBanner = container.querySelector('.banner.danger')
     expect(firstBanner.textContent).toContain('Injected instruction followed')
 
-    // Flip header toggle ON
-    const toggle = container.querySelector('#chatToggle')
-    const toggleState = container.querySelector('#chatToggleState')
-    fireEvent.click(toggle)
-
+    // Settings change elsewhere (Settings screen): Chat re-reads and displays the real state
+    api.fetchSettings.mockResolvedValueOnce({
+      mitigations: {
+        delimiter: true,
+        sanitization: true,
+        output_filter: true,
+        retrieval_score_threshold: true,
+      },
+    })
+    window.dispatchEvent(new CustomEvent('mitigation-settings-changed'))
     await waitFor(() => {
-      expect(toggle.className).toContain('toggle on')
-      expect(toggleState.textContent).toBe('Mitigation: On')
+      expect(container.querySelector('#chatToggleState').textContent).toBe('Defenses: 4 of 4 on')
     })
 
     // Ensure Turn 1 message row STILL has its danger banner
@@ -330,25 +294,9 @@ describe('Chat Component — DOM Rendering, State Transitions & Acceptance Test'
       '[SAFE NOTICE: Output blocked by policy filter]'
     )
 
-    // Both queries had correct mitigation payloads
-    expect(api.sendQuery).toHaveBeenNthCalledWith(1, {
-      query: P1_TRIGGER_QUERY,
-      mitigations: {
-        delimiter: false,
-        sanitization: false,
-        output_filter: false,
-        retrieval_score_threshold: false,
-      },
-    })
-    expect(api.sendQuery).toHaveBeenNthCalledWith(2, {
-      query: P1_TRIGGER_QUERY,
-      mitigations: {
-        delimiter: true,
-        sanitization: true,
-        output_filter: true,
-        retrieval_score_threshold: true,
-      },
-    })
+    // Neither query carries a mitigation override
+    expect(api.sendQuery).toHaveBeenNthCalledWith(1, { query: P1_TRIGGER_QUERY })
+    expect(api.sendQuery).toHaveBeenNthCalledWith(2, { query: P1_TRIGGER_QUERY })
   })
 
   it('State 5: Clean Query — renders answer and citation chip without any banner', async () => {
@@ -365,7 +313,7 @@ describe('Chat Component — DOM Rendering, State Transitions & Acceptance Test'
     const { container } = render(<Chat />)
 
     await waitFor(() => {
-      expect(container.querySelector('#chatToggle')).toHaveClass('off')
+      expect(container.querySelector('#chatToggleState').textContent).toBe('Defenses: 0 of 4 on')
     })
 
     const input = container.querySelector('#chat-input-field')

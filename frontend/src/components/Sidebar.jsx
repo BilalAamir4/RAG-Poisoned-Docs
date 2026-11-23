@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { fetchSettings, updateSettings } from '../api.js'
+import { fetchSettings } from '../api.js'
 
 import LineSidebar from './ui/LineSidebar.jsx'
 
@@ -76,7 +76,6 @@ const NAV_ITEMS = [
 export default function Sidebar({ activeRoute, onNavigate }) {
   const [settings, setSettings] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [updating, setUpdating] = useState(false)
   const [error, setError] = useState(null)
 
   // Load real backend settings on mount
@@ -107,32 +106,10 @@ export default function Sidebar({ activeRoute, onNavigate }) {
 
   // Calculate whether combined mitigation is active from real backend structure
   const m = settings?.mitigations || settings?.active_mitigations
-  const isMitigationActive = m
-    ? Boolean(m.delimiter || m.sanitization || m.output_filter || m.output_filtering || m.retrieval_score_threshold)
-    : false
   const activeCount = m
     ? [m.delimiter, m.sanitization, m.output_filter || m.output_filtering, m.retrieval_score_threshold].filter(Boolean).length
     : 0
   const railState = activeCount === 4 ? 'all' : activeCount === 0 ? 'off' : 'custom'
-
-  const toggleMitigations = async () => {
-    if (!settings || updating) return
-    const nextState = !isMitigationActive
-    setUpdating(true)
-    try {
-      const updated = await updateSettings({
-        delimiter: nextState,
-        sanitization: nextState,
-        output_filter: nextState,
-        retrieval_score_threshold: nextState,
-      })
-      setSettings(updated)
-    } catch (err) {
-      console.error('Failed to update mitigation settings:', err)
-    } finally {
-      setUpdating(false)
-    }
-  }
 
   return (
     <aside className="sidebar">
@@ -155,28 +132,18 @@ export default function Sidebar({ activeRoute, onNavigate }) {
         <span
           className={`rail-dot ${railState}`}
           role="img"
-          aria-label={`Mitigations: ${activeCount} of 4 on`}
-          title={`Mitigations: ${activeCount} of 4 on`}
+          aria-label={`Defenses: ${activeCount} of 4 on`}
+          title={`Defenses: ${activeCount} of 4 on`}
         />
-        <div className="lbl">Mitigation</div>
-        <div className="toggle-row">
-          <div
-            className={`toggle ${isMitigationActive ? 'on' : 'off'} ${updating ? 'opacity-60 cursor-wait' : ''}`}
-            onClick={toggleMitigations}
-            title={
-              loading
-                ? 'Loading settings...'
-                : error
-                ? `Error: ${error}`
-                : `Combined mitigation state: ${isMitigationActive ? 'On' : 'Off'} (Click to toggle)`
-            }
-          >
-            <div className="knob" />
-          </div>
-          <span className="state">
-            {loading ? '...' : error ? 'Offline' : isMitigationActive ? 'On' : 'Off'}
-          </span>
-        </div>
+        <div className="lbl">Defenses</div>
+        <a
+          href="#/settings"
+          className="state"
+          style={{ textDecoration: 'none' }}
+          title={loading ? 'Loading settings...' : error ? `Error: ${error}` : 'Real Settings state. Click to change it in Settings.'}
+        >
+          {loading ? '...' : error ? 'Offline' : `${activeCount} of 4 on`}
+        </a>
       </div>
     </aside>
   )

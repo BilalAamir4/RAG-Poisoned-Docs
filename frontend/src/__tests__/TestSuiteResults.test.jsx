@@ -225,7 +225,7 @@ describe('TestSuiteResults Component (RTL + jsdom)', () => {
     expect(row1).toHaveTextContent('Summarize the refund policy from our FAQ.');
     expect(row1).toHaveTextContent('All OFF');
     expect(row1).toHaveTextContent('Failed');
-    expect(row1).toHaveTextContent('LEAKED');
+    expect(row1).toHaveTextContent('Injection succeeded');
 
     const row10 = screen.getByTestId('trial-row-10');
     expect(row10).toHaveTextContent('#10');
@@ -234,7 +234,7 @@ describe('TestSuiteResults Component (RTL + jsdom)', () => {
     expect(row10).toHaveTextContent('Sanit');
     expect(row10).toHaveTextContent('OutFilter');
     expect(row10).toHaveTextContent('Passed');
-    expect(row10).toHaveTextContent('BLOCKED');
+    expect(row10).toHaveTextContent('Blocked');
   });
 
   it('calls onSelectLog with trial audit_id when clicking "View trace →"', async () => {

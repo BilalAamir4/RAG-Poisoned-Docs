@@ -102,6 +102,16 @@ def generate(
                     if not reasoning_content:
                         reasoning_content = inline_reasoning
 
+            # Guard: an empty completion is a failure, never a result (e.g. reasoning model
+            # truncated by the context window before emitting an answer). Not retried.
+            if not content.strip():
+                finish = data["choices"][0].get("finish_reason")
+                raise RuntimeError(
+                    f"LLM returned an empty completion (finish_reason={finish!r}, "
+                    f"reasoning_chars={len(reasoning_content or '')}); "
+                    "likely context-window truncation — increase the model context length."
+                )
+
             if return_reasoning:
                 return content, reasoning_content
             return content

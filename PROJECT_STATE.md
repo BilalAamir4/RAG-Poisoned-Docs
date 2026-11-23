@@ -29,7 +29,7 @@
 
 ## Deployment Status
 - **Deployment paused as of 2026-09-06** — active runtime reverted to local Ollama. Railway service deleted. Vercel not yet deployed. P15's Groq validation evidence remains on file and is still valid for reactivation when redeployment is decided.
-- **Active Runtime**: Local Ollama (`http://localhost:11434/v1`, model `llama3.1`) + local FastAPI backend (`http://localhost:8000`) + local Vite frontend (`http://localhost:5173`).
+- **Active Runtime**: Local Ollama (`http://localhost:11434/v1`, model `llama3.1:8b`, started with `OLLAMA_CONTEXT_LENGTH=8192`; updated 2026-11-23) + local FastAPI backend (`http://localhost:8000`) + local Vite frontend (`http://localhost:5173`).
 - **Zero-Code Invariant**: Revert accomplished strictly via `backend/.env` with zero code modifications.
 
 ## Deliverables Tagged
@@ -722,6 +722,20 @@ P0-P4 were developed sequentially in the workspace before git was initialized. A
   6. Chat toggle overrides granular Settings on every query; commit b0c7320 (P18) was missing from this file.
 - Side effects: pre-audit audit.db (316 rows) wiped by reset (backup in `audit_artifacts/`); original mitigation settings restored.
 - Recovery note (2026-11-23): this entry was re-added after PROJECT_STATE.md was deleted and restored from git. PROJECT_STATE.md had no uncommitted changes before the audit (`audit_artifacts/git_status_before.txt`), so no earlier content is known to be lost.
+
+### Phase 1 follow-up — DONE 2026-11-23
+- Checkpoint commit `1c1f1de` (working tree incl. UI_AUDIT.md fix pass and PHASE1_AUDIT.md). Details and evidence: `PHASE1_AUDIT.md` §8.
+- **Active model: `llama3.1:8b`** (only the `LLM_MODEL` line of `backend/.env` changed); **Ollama context: 8192** (`OLLAMA_CONTEXT_LENGTH=8192` when starting `ollama serve`). `qwen3.5:latest` is NOT the demo model: it needs a longer context and exceeds the backend's fixed 120 s timeout.
+- **Guard B** in `backend/llm_client.py`: `generate()` raises `RuntimeError` on an empty/whitespace-only completion (never retried), so truncation can no longer be reported as a defended/`sanitized` result. UI shows the red error banner ("Failed to fetch"); the real message does not reach the UI because 500 responses lack CORS headers.
+- **Verification on llama3.1:8b:** all-OFF 3/3 leaked (claim repeated, URL never emitted); all-ON 3/3 blocked (final response is the filter's block message); audit rows consistent. 16-combination ablation (3 trials each): all stable, 0 empty responses.
+- **Corrected statement on mitigations (llama3.1:8b):** only the **output filter** blocks the attack (24/24 filter-ON trials blocked, 24/24 filter-OFF trials leaked). Delimiter and sanitization alone do NOT stop the model repeating the false claim (it still does in the all-ON raw output); the threshold only flags. The block is a regex on the response, not the model resisting.
+- Experiment only (not the demo config): qwen3.5 with a 16384 context, direct to Ollama, one all-ON run: answered correctly, no false claim, no URL (single run; qwen through the backend timed out at 120 s).
+- Decisions for later phases (not implemented yet):
+  - Chat header toggle becomes a display of the real Settings state with no per-query override.
+  - Keep the clean audit log; the pre-audit backup stays in `audit_artifacts/` (gitignored).
+  - Re-run the Promptfoo suite on llama3.1:8b in Phase 2.
+  - All 7 FABRICATED items and the 5 wrong DERIVED formulas from `PHASE1_AUDIT.md` §4 are Phase 2 fixes.
+  - Add CORS headers to error responses (so the UI can show the real error instead of "Failed to fetch").
 
 ## Current phase
 Phase 2 — demo reliability (pending Phase 1 review)

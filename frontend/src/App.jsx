@@ -7,6 +7,7 @@ import AuditLog from './components/AuditLog.jsx'
 import TraceDetail from './components/TraceDetail.jsx'
 import TestSuiteResults from './components/TestSuiteResults.jsx'
 import Settings from './components/Settings.jsx'
+import DemoApp from './demo/DemoApp.jsx'
 
 const SCREENS = {
   trace: {
@@ -48,7 +49,8 @@ const SCREENS = {
 
 function getRouteFromHash() {
   const hash = window.location.hash.replace(/^#\/?/, '')
-  return SCREENS[hash] ? hash : 'trace'
+  if (SCREENS[hash]) return hash
+  return 'demo' // Demo Mode is the default landing page (#/, #/demo, #/demo/N, unknown hashes)
 }
 
 export default function App() {
@@ -78,6 +80,8 @@ export default function App() {
   }
 
   const currentScreen = SCREENS[activeRoute] || SCREENS.trace
+
+  if (activeRoute === 'demo') return <DemoApp />
 
   return (
     <div className="app">

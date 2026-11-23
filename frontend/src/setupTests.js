@@ -13,3 +13,12 @@ if (typeof window !== 'undefined' && !window.IntersectionObserver) {
   }
 }
 
+
+// jsdom has no ResizeObserver (Radix popper / tooltip need one)
+if (typeof globalThis !== 'undefined' && !globalThis.ResizeObserver) {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}

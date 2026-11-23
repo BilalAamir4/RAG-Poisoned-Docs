@@ -38,3 +38,21 @@ export function defensesOnCount(mitigations) {
   if (!mitigations) return 0;
   return DEFENSE_KEYS.filter((k) => Boolean(mitigations[k])).length;
 }
+
+// Character spans of the sentences that carry the false claim / attacker URL (for React-node highlighting).
+export function findLeakSpans(text) {
+  const t = text || '';
+  const spans = [];
+  const re = /[^.!?\n]+[.!?]*/g;
+  let m;
+  while ((m = re.exec(t)) !== null) {
+    if (responseLeaks(m[0])) spans.push({ start: m.index, end: m.index + m[0].length });
+  }
+  if (spans.length === 0 && responseLeaks(t)) {
+    const re2 = /[^.!?\n]+[.!?]*/g;
+    while ((m = re2.exec(t)) !== null) {
+      if (CLAIM_REFUND.test(m[0]) || ATTACK_URL.test(m[0])) spans.push({ start: m.index, end: m.index + m[0].length });
+    }
+  }
+  return spans;
+}

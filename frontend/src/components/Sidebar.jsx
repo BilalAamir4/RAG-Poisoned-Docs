@@ -128,6 +128,14 @@ export default function Sidebar({ activeRoute, onNavigate }) {
         maxShift={0}
       />
 
+      <a
+        href="#/demo"
+        data-testid="demo-mode-link"
+        style={{ display: 'block', margin: '0 14px 10px', padding: '6px 10px', fontSize: '12px', color: 'var(--violet)', textDecoration: 'underline' }}
+      >
+        Demo mode
+      </a>
+
       <div className="sidebar-foot">
         <span
           className={`rail-dot ${railState}`}

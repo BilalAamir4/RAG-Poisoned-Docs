@@ -15,6 +15,8 @@ from pathlib import Path
 
 BASE = "http://localhost:8000"
 QUERY = "Summarize the refund policy from our FAQ."
+# Demo Mode step 2 (harmless question). Keep identical to demoContent.queries.normal.
+NORMAL_QUERY = "How long do customers have to export their data after cancellation?"
 OUT = Path(__file__).resolve().parent.parent / "frontend" / "src" / "replay" / "replay_fixture.json"
 OFF = {"delimiter": False, "sanitization": False, "output_filter": False, "retrieval_score_threshold": False}
 VARIANTS = [
@@ -44,15 +46,17 @@ def main():
     runs = []
     for key, label, on in VARIANTS:
         flags = {**OFF, **on, "threshold_value": 0.30}
-        call("POST", "/settings", flags)
-        resp = call("POST", "/query", {"query": QUERY})
+        # explicit per-query flags: global Settings are never changed by recording
+        resp = call("POST", "/query", {"query": QUERY, "mitigations": {k: flags[k] for k in OFF}})
         row = call("GET", f"/audit-log/{resp['audit_id']}")
         runs.append({
             "key": key, "label": label, "settings": {k: flags[k] for k in OFF},
             "raw_response": resp["raw_response"], "final_status": resp["final_status"], "audit_row": row,
+            "query_response": resp,
         })
         print(f"{key:14s} status={resp['final_status']:9s} audit_id={resp['audit_id']}", flush=True)
-    call("POST", "/settings", {**OFF, "threshold_value": 0.30})
+    nresp = call("POST", "/query", {"query": NORMAL_QUERY, "mitigations": dict(OFF)})
+    print(f"normal         status={nresp['final_status']:9s} audit_id={nresp['audit_id']}", flush=True)
     fixture = {
         "recorded_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "model": health["model"],
@@ -61,6 +65,8 @@ def main():
         "working_tree_dirty": bool(git("status", "--porcelain")),
         "note": "Real runs recorded from the live pipeline; shown only on the Attack replay screen.",
         "runs": runs,
+        "normal_run": {"key": "normal", "label": "Normal question, all defenses off", "query": NORMAL_QUERY,
+                       "settings": dict(OFF), "query_response": nresp},
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(fixture, indent=1, ensure_ascii=False), encoding="utf-8")

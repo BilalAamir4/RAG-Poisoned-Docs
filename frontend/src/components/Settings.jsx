@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { fetchSettings, updateSettings, resetDemoData } from '../api.js'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 export default function Settings() {
   const [loading, setLoading] = useState(true)
@@ -397,26 +407,20 @@ export default function Settings() {
         </div>
       </div>
 
-      {confirmOpen && (
-        <div
-          role="alertdialog"
-          aria-modal="true"
-          aria-labelledby="reset-dialog-title"
-          data-testid="reset-dialog"
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}
-        >
-          <div className="card" style={{ maxWidth: '440px', padding: '20px' }}>
-            <div className="title" id="reset-dialog-title">Reset demo data?</div>
-            <div className="desc" style={{ margin: '10px 0 16px' }}>
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent data-testid="reset-dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset demo data?</AlertDialogTitle>
+            <AlertDialogDescription>
               This wipes and rebuilds the Chroma collection with the baseline documents, clears all SQLite audit logs, and restores default mitigation settings.
-            </div>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button type="button" className="btn ghost" id="reset-cancel-btn" onClick={() => setConfirmOpen(false)}>Cancel</button>
-              <button type="button" className="btn danger-ghost" id="reset-confirm-btn" onClick={handleReset}>Reset</button>
-            </div>
-          </div>
-        </div>
-      )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel id="reset-cancel-btn">Cancel</AlertDialogCancel>
+            <AlertDialogAction id="reset-confirm-btn" onClick={handleReset}>Reset</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   )
 }

@@ -75,7 +75,7 @@ export default function Step6() {
       )}
       {!tests && !error && <Skeleton className="h-48 w-full" aria-label={c.loading} />}
       {tests && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-[2fr_3fr] gap-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base">{c.chartTitle}</CardTitle>
@@ -119,7 +119,7 @@ export default function Step6() {
                   <TableBody>
                     {(rows || []).map((r) => (
                       <TableRow key={r.id} data-testid={`audit-${r.id}`}>
-                        <TableCell className="font-mono text-sm">{new Date(r.timestamp).toTimeString().slice(0, 8)}</TableCell>
+                        <TableCell className="font-mono text-sm px-1">{new Date(r.timestamp).toTimeString().slice(0, 8)}</TableCell>
                         <TableCell>{r.source_document}</TableCell>
                         <TableCell className="font-mono text-sm">{r.similarity_score != null ? Number(r.similarity_score).toFixed(2) : '—'}</TableCell>
                         <TableCell><StatusBadge status={r.final_status} /></TableCell>

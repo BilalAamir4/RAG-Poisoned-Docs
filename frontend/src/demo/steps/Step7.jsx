@@ -100,7 +100,7 @@ export default function Step7({ onSandboxChange, registerRestore }) {
       <Textarea
         id="instruction"
         data-testid="instruction-input"
-        className="min-h-24 text-base"
+        className="min-h-0 text-base" rows={2}
         placeholder={c.placeholder}
         value={text}
         onChange={(e) => setText(e.target.value)}

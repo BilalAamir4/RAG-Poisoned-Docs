@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { CircleAlertIcon } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,14 @@ export default function Step3() {
   }, [])
   useEffect(() => load(), [load])
 
+  // Scroll the text box (not the page) so the planted paragraph is centred in view.
+  const boxRef = useRef(null)
+  useEffect(() => {
+    const box = boxRef.current
+    const mark = box?.querySelector('mark')
+    if (box && mark) box.scrollTop = Math.max(0, mark.offsetTop - (box.clientHeight - mark.offsetHeight) / 2)
+  }, [doc])
+
   return (
     <StepFrame title={c.title} lead={c.lead}>
       {error && (
@@ -41,7 +49,7 @@ export default function Step3() {
           <Card className="col-span-2">
             <CardContent>
               <p className="mb-2 font-mono text-sm text-muted-foreground">{doc.filename}</p>
-              <div data-testid="doc-text" className="max-h-[48vh] overflow-y-auto whitespace-pre-wrap text-sm leading-snug">
+              <div ref={boxRef} data-testid="doc-text" className="relative max-h-[56vh] overflow-y-auto whitespace-pre-wrap text-sm leading-snug">
                 <Highlight text={doc.text} spans={doc.injected_span ? [doc.injected_span] : []} label={c.hiddenLabel} />
               </div>
             </CardContent>

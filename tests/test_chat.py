@@ -46,8 +46,12 @@ def test_chat_zero_url_leaks():
     assert "8000" not in content, "Found forbidden hardcoded '8000' in Chat.jsx"
     assert "fetch(" not in content, "Chat.jsx must use api.js helpers, not raw fetch()"
     assert "fetchSettings" in content, "Chat.jsx must import fetchSettings from ../api.js"
-    assert "updateSettings" in content, "Chat.jsx must import updateSettings from ../api.js"
     assert "sendQuery" in content, "Chat.jsx must import sendQuery from ../api.js"
+    # Phase 2 moved Chat to per-query mitigations: it must not mutate global Settings, and every backend call
+    # must come from api.js (this is the real no-URL-leak guarantee, not a list of import names).
+    assert "updateSettings" not in content, "Chat.jsx must not change global Settings (per-query mitigations only)"
+    assert re.search(r"from\s+['\"]\.\./api\.js['\"]", content), "Chat.jsx must import its backend helpers from ../api.js"
+    assert not re.search(r"https?://", content), "Chat.jsx must not contain any hardcoded http(s) URL"
 
 
 def test_chat_rtl_and_vitest():

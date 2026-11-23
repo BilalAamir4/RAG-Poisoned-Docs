@@ -9,6 +9,7 @@ const { chromium } = require('playwright')
 
 const [base = 'http://localhost:5173', out = 'audit_artifacts/phase3', w = '1280', h = '720', instruction] = process.argv.slice(2)
 fs.mkdirSync(out, { recursive: true })
+const flat = (t) => t.split(String.fromCharCode(10)).join(' | ')
 const tag = `${w}x${h}`
 const times = {}
 const browser = await chromium.launch({ channel: 'chrome', headless: true })
@@ -58,6 +59,14 @@ await page.getByText('Plant it and run').click()
 await timed('step7', () => page.waitForSelector('[data-testid=step7-retrieval]', { timeout: 300000 }))
 await shot(7)
 console.log('RETRIEVED', await page.getByTestId('step7-retrieval').getAttribute('data-retrieved'))
+const cards = page.getByTestId('step7-result')
+for (let i = 0; i < await cards.count(); i += 1) {
+  console.log(`STEP7 card ${i} RAW:`, await cards.nth(i).getByTestId('step7-raw').textContent())
+  console.log(`STEP7 card ${i} FINAL:`, await cards.nth(i).getByTestId('step7-final').textContent())
+  console.log(`STEP7 card ${i} TEXT:`, flat(await cards.nth(i).innerText()).slice(0, 400))
+}
+console.log('STEP7 retrieval text:', flat(await page.getByTestId('step7-retrieval').innerText()))
+console.log('STEP7 auto-check:', await page.getByTestId('auto-check-note').textContent())
 await page.getByRole('button', { name: 'Restore original documents' }).click()
 await page.waitForTimeout(400)
 await shot(7, 'b_restore_dialog')

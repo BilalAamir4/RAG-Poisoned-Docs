@@ -9,7 +9,7 @@ import { CircleCheckIcon, CircleXIcon, FlagIcon, CircleAlertIcon } from 'lucide-
 import { DEFENSE_KEYS } from '../../status.js'
 import { demoContent, fmt } from '../demoContent.js'
 import { getSettingsReadOnly, runDemoQuery } from '../demoApi.js'
-import { FlagChips, PipelineTrace, ReplayBanner, RunStatus, StatusBadge, StepFrame } from '../parts.jsx'
+import { FlagChips, JargonTerm, PipelineTrace, ReplayBanner, RunStatus, StatusBadge, StepFrame } from '../parts.jsx'
 import { recordedRowRun } from '../replay.js'
 import { getNormalScores } from '../session.js'
 import { useAsyncRun } from '../useAsyncRun.js'
@@ -74,90 +74,6 @@ export default function Step5() {
         recordedLabel={demoContent.live.showRecordedTable}
       />
       {recorded && <ReplayBanner />}
-      <Table data-testid="step5-table">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-1/4">{c.colDefense}</TableHead>
-            <TableHead>{c.colRaw}</TableHead>
-            <TableHead className="w-1/3">{c.colUser}</TableHead>
-            <TableHead>{c.colVerdict}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {table.rows.map((r) => {
-            const def = c.rows.find((x) => x.id === r.id)
-            const flags = Object.fromEntries(DEFENSE_KEYS.map((k) => [k, def.on.includes(k)]))
-            const stopped = r.run && r.id !== 'none' ? whereStopped(r.run) : null
-            const flagged = r.run?.stages?.threshold_flagged
-            return (
-              <TableRow key={r.id} data-testid={`row-${r.id}`} className="align-top whitespace-normal">
-                <TableCell className="whitespace-normal">
-                  <div className="font-semibold">{def.name}</div>
-                  <div className="text-sm text-muted-foreground">{def.desc}</div>
-                  {r.id === 'retrieval_score_threshold' && (
-                    <div className="text-sm text-muted-foreground" data-testid="threshold-idea">{c.thresholdIdea}</div>
-                  )}
-                  {r.id === 'retrieval_score_threshold' && note && (
-                    <div className="mt-1 text-sm" data-testid="threshold-note">
-                      {fmt(c.thresholdNote, { limit, n: note.n, m: note.m })}
-                    </div>
-                  )}
-                </TableCell>
-                {r.run ? (
-                  <>
-                    <TableCell className="whitespace-normal">
-                      <Badge variant="gray" data-testid={`raw-${r.id}`} data-repeated={rawRepeated(r.run)}>
-                        {rawRepeated(r.run) ? <CircleXIcon aria-hidden="true" /> : <CircleCheckIcon aria-hidden="true" />}
-                        {rawRepeated(r.run) ? c.rawRepeated : c.rawClean}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="whitespace-normal">
-                      <p className="line-clamp-3 text-base leading-snug">{r.run.response}</p>
-                      <details className="text-sm text-muted-foreground">
-                        <summary className="cursor-pointer">{c.fullAnswer}</summary>
-                        <p className="mt-1 text-foreground">{r.run.response}</p>
-                      </details>
-                    </TableCell>
-                    <TableCell className="whitespace-normal">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <StatusBadge status={r.verdict} />
-                        {flagged && (
-                          <Badge variant="amber"><FlagIcon aria-hidden="true" />{c.flaggedBadge}</Badge>
-                        )}
-                      </div>
-                      {stopped && (
-                        <p className="mt-1 text-sm text-muted-foreground" data-testid={`stopped-${r.id}`}>
-                          {stopped.kind === 'facts'
-                            ? fmt(c.stopped.facts, { filter: c.stopped[stopped.filter === 'notOn' ? 'notOn' : stopped.filter], sanitization: c.stopped[stopped.sanitization] })
-                            : c.stopped[stopped.kind]}
-                        </p>
-                      )}
-                      <TraceCollapsible>
-                        <TraceCollapsibleTrigger>
-                          <TraceLine>
-                            <TraceIcon><CircleAlertIcon /></TraceIcon>
-                            <TraceTitle className="text-sm">{demoContent.pipeline.title}</TraceTitle>
-                          </TraceLine>
-                        </TraceCollapsibleTrigger>
-                        <TraceCollapsibleContent><PipelineTrace run={r.run} /></TraceCollapsibleContent>
-                      </TraceCollapsible>
-                    </TableCell>
-                  </>
-                ) : (
-                  <TableCell colSpan={3} className="text-muted-foreground">
-                    {current === r.id ? (
-                      <span className="inline-flex items-center gap-2"><Spinner />{c.runningRow}</span>
-                    ) : (
-                      c.pending
-                    )}
-                    <div className="mt-1"><FlagChips flags={flags} limit={limit} /></div>
-                  </TableCell>
-                )}
-              </TableRow>
-            )
-          })}
-        </TableBody>
-      </Table>
       {table.rows.every((r) => r.run) && (
         <Alert data-testid="step5-summary">
           <AlertTitle className="flex flex-col gap-1 text-base">
@@ -182,6 +98,88 @@ export default function Step5() {
           )}
         </Alert>
       )}
+      <Table data-testid="step5-table">
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-1/4">{c.colDefense}</TableHead>
+            <TableHead>{c.colRaw}</TableHead>
+            <TableHead className="w-2/5">{c.colUser}</TableHead>
+            <TableHead>{c.colVerdict}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {table.rows.map((r) => {
+            const def = c.rows.find((x) => x.id === r.id)
+            const flags = Object.fromEntries(DEFENSE_KEYS.map((k) => [k, def.on.includes(k)]))
+            const stopped = r.run && r.id !== 'none' ? whereStopped(r.run) : null
+            const flagged = r.run?.stages?.threshold_flagged
+            return (
+              <TableRow key={r.id} data-testid={`row-${r.id}`} className="align-top whitespace-normal">
+                <TableCell className="whitespace-normal">
+                  <JargonTerm term={`defense-${r.id}`} body={r.id === 'retrieval_score_threshold' ? `${def.desc} ${c.thresholdIdea}` : def.desc}>
+                    <span className="font-semibold">{def.name}</span>
+                  </JargonTerm>
+                  {r.id === 'retrieval_score_threshold' && note && (
+                    <div className="mt-1 text-sm" data-testid="threshold-note">
+                      {fmt(c.thresholdNote, { limit, n: note.n, m: note.m })}
+                    </div>
+                  )}
+                </TableCell>
+                {r.run ? (
+                  <>
+                    <TableCell className="whitespace-normal">
+                      <Badge variant="gray" data-testid={`raw-${r.id}`} data-repeated={rawRepeated(r.run)}>
+                        {rawRepeated(r.run) ? <CircleXIcon aria-hidden="true" /> : <CircleCheckIcon aria-hidden="true" />}
+                        {rawRepeated(r.run) ? c.rawRepeated : c.rawClean}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="whitespace-normal">
+                      <p className="line-clamp-1 text-base leading-snug">{r.run.response}</p>
+                      <details className="text-sm text-muted-foreground">
+                        <summary className="cursor-pointer">{c.fullAnswer}</summary>
+                        <p className="mt-1 text-foreground">{r.run.response}</p>
+                        {stopped && (
+                          <p className="mt-2" data-testid={`stopped-${r.id}`}>
+                            {stopped.kind === 'facts'
+                              ? fmt(c.stopped.facts, { filter: c.stopped[stopped.filter === 'notOn' ? 'notOn' : stopped.filter], sanitization: c.stopped[stopped.sanitization] })
+                              : c.stopped[stopped.kind]}
+                          </p>
+                        )}
+                        <TraceCollapsible>
+                          <TraceCollapsibleTrigger>
+                            <TraceLine>
+                              <TraceIcon><CircleAlertIcon /></TraceIcon>
+                              <TraceTitle className="text-sm">{demoContent.pipeline.title}</TraceTitle>
+                            </TraceLine>
+                          </TraceCollapsibleTrigger>
+                          <TraceCollapsibleContent><PipelineTrace run={r.run} /></TraceCollapsibleContent>
+                        </TraceCollapsible>
+                      </details>
+                    </TableCell>
+                    <TableCell className="whitespace-normal">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusBadge status={r.verdict} />
+                        {flagged && (
+                          <Badge variant="amber"><FlagIcon aria-hidden="true" />{c.flaggedBadge}</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                  </>
+                ) : (
+                  <TableCell colSpan={3} className="text-muted-foreground">
+                    {current === r.id ? (
+                      <span className="inline-flex items-center gap-2"><Spinner />{c.runningRow}</span>
+                    ) : (
+                      c.pending
+                    )}
+                    <div className="mt-1"><FlagChips flags={flags} limit={limit} /></div>
+                  </TableCell>
+                )}
+              </TableRow>
+            )
+          })}
+        </TableBody>
+      </Table>
     </StepFrame>
   )
 }

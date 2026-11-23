@@ -51,7 +51,7 @@ export function RunRow({ label, question, flags, limit, onRun, disabled, buttonL
 }
 
 // Jargon term: opens on hover/focus, and on click/tap it stays pinned until Escape, an outside click or a second click.
-export function JargonTerm({ term, children }) {
+export function JargonTerm({ term, body, children }) {
   const [pinned, setPinned] = useState(false)
   const [open, setOpen] = useState(false)
   const close = () => { setPinned(false); setOpen(false) }
@@ -69,7 +69,7 @@ export function JargonTerm({ term, children }) {
         </button>
       </TooltipTrigger>
       <TooltipContent onEscapeKeyDown={close} onPointerDownOutside={close}>
-        {demoContent.glossary[term]}
+        {body ?? demoContent.glossary[term]}
       </TooltipContent>
     </Tooltip>
   )

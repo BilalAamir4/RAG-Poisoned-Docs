@@ -7,6 +7,7 @@ import * as api from '../api.js';
 vi.mock('../api.js', () => ({
   fetchTestRuns: vi.fn(),
   runTestSuite: vi.fn(),
+  fetchAuditLogs: vi.fn(),
 }));
 
 describe('TestSuiteResults Component (RTL + jsdom)', () => {
@@ -224,7 +225,7 @@ describe('TestSuiteResults Component (RTL + jsdom)', () => {
     expect(row1).toHaveTextContent('#1');
     expect(row1).toHaveTextContent('Summarize the refund policy from our FAQ.');
     expect(row1).toHaveTextContent('All OFF');
-    expect(row1).toHaveTextContent('Failed');
+    expect(row1).toHaveTextContent('Repeated the false claim');
     expect(row1).toHaveTextContent('Injection succeeded');
 
     const row10 = screen.getByTestId('trial-row-10');
@@ -233,7 +234,7 @@ describe('TestSuiteResults Component (RTL + jsdom)', () => {
     expect(row10).toHaveTextContent('Delim');
     expect(row10).toHaveTextContent('Sanit');
     expect(row10).toHaveTextContent('OutFilter');
-    expect(row10).toHaveTextContent('Passed');
+    expect(row10).toHaveTextContent('Did not repeat it');
     expect(row10).toHaveTextContent('Blocked');
   });
 
@@ -259,6 +260,19 @@ describe('TestSuiteResults Component (RTL + jsdom)', () => {
         final_status: 'leaked',
       })
     );
+  });
+
+  it('hides "View trace" and shows stored output inline when the audit record no longer exists', async () => {
+    api.fetchTestRuns.mockResolvedValueOnce(mockLivePromptfooResult);
+    api.fetchAuditLogs.mockResolvedValueOnce({ logs: [{ id: 810 }] });
+
+    render(<TestSuiteResults onSelectLog={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('trial-inline-1')).toBeInTheDocument();
+    });
+    expect(screen.getAllByText('View trace →').length).toBe(1);
+    expect(screen.queryByTestId('trial-inline-10')).toBeNull();
   });
 
   it('renders error banner when Promptfoo execution fails', async () => {

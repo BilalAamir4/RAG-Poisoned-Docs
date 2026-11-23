@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { fetchTestRuns, runTestSuite } from '../api.js'
+import { fetchTestRuns, runTestSuite, fetchAuditLogs } from '../api.js'
 import { statusColor, statusLabel } from '../status.js'
 
 export default function TestSuiteResults({ onSelectLog }) {
@@ -7,6 +7,17 @@ export default function TestSuiteResults({ onSelectLog }) {
   const [loading, setLoading] = useState(true)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState(null)
+  // ids of audit rows that still exist; null = could not be determined (keep links)
+  const [auditIds, setAuditIds] = useState(null)
+
+  const refreshAuditIds = async () => {
+    try {
+      const res = await fetchAuditLogs({ limit: 1000 })
+      setAuditIds(new Set((res.logs || []).map((l) => l.id)))
+    } catch (_) {
+      setAuditIds(null)
+    }
+  }
 
   const loadData = async () => {
     try {
@@ -14,6 +25,7 @@ export default function TestSuiteResults({ onSelectLog }) {
       setError(null)
       const res = await fetchTestRuns()
       setData(res)
+      await refreshAuditIds()
     } catch (err) {
       setError(err.message || 'Failed to load test suite results')
     } finally {
@@ -31,6 +43,7 @@ export default function TestSuiteResults({ onSelectLog }) {
       setError(null)
       const res = await runTestSuite()
       setData(res)
+      await refreshAuditIds()
     } catch (err) {
       setError(err.message || 'Failed to execute Promptfoo test suite')
     } finally {
@@ -240,10 +253,10 @@ export default function TestSuiteResults({ onSelectLog }) {
                   <th>Query</th>
                   <th>Mitigation Config</th>
                   <th
-                    style={{ width: '150px' }}
-                    title="Promptfoo's assertion graded the raw model output, before the pipeline's output filter. The Outcome column shows the pipeline result after the filter."
+                    style={{ width: '190px' }}
+                    title="Whether the model's own answer, before the output filter, repeated the false claim. Read with Outcome: model fooled, then filter blocked."
                   >
-                    Raw model (pre-filter)
+                    Model's raw answer
                   </th>
                   <th style={{ width: '100px' }}>Outcome</th>
                   <th style={{ width: '120px', textAlign: 'right', whiteSpace: 'nowrap' }}>Action</th>
@@ -289,9 +302,9 @@ export default function TestSuiteResults({ onSelectLog }) {
                       </td>
                       <td>
                         {trial.promptfoo_passed ? (
-                          <span className="badge teal">Passed</span>
+                          <span className="badge teal">Did not repeat it</span>
                         ) : (
-                          <span className="badge red">Failed</span>
+                          <span className="badge red">Repeated the false claim</span>
                         )}
                       </td>
                       <td>
@@ -300,7 +313,7 @@ export default function TestSuiteResults({ onSelectLog }) {
                         </span>
                       </td>
                       <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                        {trial.audit_id != null && (
+                        {trial.audit_id != null && (auditIds === null || auditIds.has(trial.audit_id)) ? (
                         <button
                           className="text-xs text-violet hover:underline font-mono"
                           onClick={() => {
@@ -316,6 +329,18 @@ export default function TestSuiteResults({ onSelectLog }) {
                         >
                           View trace →
                         </button>
+                        ) : (
+                          <details className="text-xs" style={{ textAlign: 'left' }} data-testid={`trial-inline-${trial.trial_num}`}>
+                            <summary className="text-violet cursor-pointer">Stored output</summary>
+                            <div className="mt-1 font-mono" style={{ whiteSpace: 'pre-wrap', maxWidth: '420px' }}>
+                              <div className="text-muted">Prompt</div>
+                              <div>{trial.prompt || '—'}</div>
+                              <div className="text-muted mt-1">Raw model output</div>
+                              <div>{trial.raw_response || '—'}</div>
+                              <div className="text-muted mt-1">Final response</div>
+                              <div>{trial.response || '—'}</div>
+                            </div>
+                          </details>
                         )}
                       </td>
                     </tr>

@@ -148,7 +148,6 @@ export default function AuditLog({ onSelectLog }) {
           <thead>
             <tr>
               <th>Time</th>
-              <th>Event</th>
               <th>Source document</th>
               <th>Similarity score</th>
               <th>Status</th>
@@ -157,13 +156,13 @@ export default function AuditLog({ onSelectLog }) {
           <tbody data-testid="audit-table-body">
             {loading ? (
               <tr className="logrow" data-testid="logrow-loading">
-                <td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '24px' }}>
+                <td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '24px' }}>
                   Loading audit logs...
                 </td>
               </tr>
             ) : displayedLogs.length === 0 ? (
               <tr className="logrow" data-testid="logrow-empty">
-                <td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '24px' }}>
+                <td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '24px' }}>
                   {filter === 'flagged' ? 'No flagged audit events found' : 'No audit log events found'}
                 </td>
               </tr>
@@ -174,7 +173,6 @@ export default function AuditLog({ onSelectLog }) {
                 );
                 const simScore =
                   log.similarity_score != null ? Number(log.similarity_score).toFixed(2) : '—';
-                const eventName = log.event || 'Generation';
 
                 return (
                   <tr
@@ -189,7 +187,6 @@ export default function AuditLog({ onSelectLog }) {
                     <td className="time" title={log.timestamp}>
                       {formatTime(log.timestamp)}
                     </td>
-                    <td className="event">{eventName}</td>
                     <td className="source">{log.source_document || '—'}</td>
                     <td className="sim">{simScore}</td>
                     <td>

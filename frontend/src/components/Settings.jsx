@@ -7,6 +7,7 @@ export default function Settings() {
   const [savingKey, setSavingKey] = useState(null)
   const [resetting, setResetting] = useState(false)
   const [resetMessage, setResetMessage] = useState(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   // Mitigation toggles & threshold state
   const [mitigations, setMitigations] = useState({
@@ -142,11 +143,7 @@ export default function Settings() {
   // Handle atomic demo reset
   const handleReset = async () => {
     if (resetting) return
-    const confirmed = window.confirm(
-      'Reset demo data? This will synchronously wipe and rebuild the Chroma collection with baseline documents, clear all SQLite audit logs, and restore default mitigation settings.'
-    )
-    if (!confirmed) return
-
+    setConfirmOpen(false)
     setResetting(true)
     setError(null)
     setResetMessage(null)
@@ -391,7 +388,7 @@ export default function Settings() {
             type="button"
             className="btn danger-ghost"
             id="resetDemoBtn"
-            onClick={handleReset}
+            onClick={() => setConfirmOpen(true)}
             disabled={resetting}
             style={{ opacity: resetting ? 0.6 : 1, cursor: resetting ? 'wait' : 'pointer' }}
           >
@@ -399,6 +396,27 @@ export default function Settings() {
           </button>
         </div>
       </div>
+
+      {confirmOpen && (
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="reset-dialog-title"
+          data-testid="reset-dialog"
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}
+        >
+          <div className="card" style={{ maxWidth: '440px', padding: '20px' }}>
+            <div className="title" id="reset-dialog-title">Reset demo data?</div>
+            <div className="desc" style={{ margin: '10px 0 16px' }}>
+              This wipes and rebuilds the Chroma collection with the baseline documents, clears all SQLite audit logs, and restores default mitigation settings.
+            </div>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button type="button" className="btn ghost" id="reset-cancel-btn" onClick={() => setConfirmOpen(false)}>Cancel</button>
+              <button type="button" className="btn danger-ghost" id="reset-confirm-btn" onClick={handleReset}>Reset</button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

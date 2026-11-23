@@ -51,8 +51,7 @@ describe('Settings Component (RTL + jsdom DOM and State Transition Suite)', () =
         threshold_value: 0.30,
       },
     })
-    // Mock window.confirm
-    vi.spyOn(window, 'confirm').mockImplementation(() => true)
+    vi.spyOn(window, 'confirm')
   })
 
   it('State 1: Initial Render — displays 3 mitigation rows, Naive Filter badge, slider, config panel, and reset button', async () => {
@@ -181,8 +180,11 @@ describe('Settings Component (RTL + jsdom DOM and State Transition Suite)', () =
     const resetBtn = container.querySelector('#resetDemoBtn')
     fireEvent.click(resetBtn)
 
+    expect(api.resetDemoData).not.toHaveBeenCalled()
+    fireEvent.click(await screen.findByText('Reset', { selector: '#reset-confirm-btn' }))
+
     await waitFor(() => {
-      expect(window.confirm).toHaveBeenCalled()
+      expect(window.confirm).not.toHaveBeenCalled()
       expect(api.resetDemoData).toHaveBeenCalled()
     })
 

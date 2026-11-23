@@ -75,7 +75,6 @@ describe('AuditLog Component - RTL + jsdom DOM and State Transition Suite', () =
     const headerTexts = Array.from(headers).map((h) => h.textContent.trim());
     expect(headerTexts).toEqual([
       'Time',
-      'Event',
       'Source document',
       'Similarity score',
       'Status',
@@ -88,7 +87,7 @@ describe('AuditLog Component - RTL + jsdom DOM and State Transition Suite', () =
     // Row 101 (Clean): Time, Event, Source, Similarity, Status
     const row1 = screen.getByTestId('log-row-101');
     expect(row1.querySelector('.time')).toBeInTheDocument();
-    expect(row1.querySelector('.event').textContent).toBe('Generation');
+    expect(row1.querySelector('.event')).toBeNull();
     expect(row1.querySelector('.source').textContent).toBe('employee_handbook.md');
     expect(row1.querySelector('.sim').textContent).toBe('0.81');
     expect(row1.querySelector('.badge').textContent).toBe('Clean');
@@ -223,18 +222,15 @@ describe('AuditLog Component - RTL + jsdom DOM and State Transition Suite', () =
     const row = screen.getByTestId('log-row-101');
     const timeCell = row.querySelector('td.time');
     const simCell = row.querySelector('td.sim');
-    const eventCell = row.querySelector('td.event');
     const sourceCell = row.querySelector('td.source');
 
     expect(timeCell).toBeInTheDocument();
     expect(simCell).toBeInTheDocument();
-    expect(eventCell).toBeInTheDocument();
     expect(sourceCell).toBeInTheDocument();
 
     // Check class names
     expect(timeCell.className).toBe('time');
     expect(simCell.className).toBe('sim');
-    expect(eventCell.className).toBe('event');
     expect(sourceCell.className).toBe('source');
   });
 

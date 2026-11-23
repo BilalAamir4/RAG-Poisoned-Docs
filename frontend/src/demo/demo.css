@@ -91,3 +91,18 @@ html:has(.demo-root) body {
   --status-amber: var(--amber);
   --status-amber-dim: var(--amber-dim);
 }
+
+/*
+ * The Inspector's index.css has UNLAYERED global element rules (table, th, td, :focus-visible). In Tailwind v4,
+ * unlayered rules beat layered utilities, so inside the demo they must be neutralised explicitly.
+ */
+.demo-root table { font-size: inherit; width: 100%; }
+.demo-root th {
+  font-size: inherit;
+  color: var(--sh-foreground);
+  font-weight: 500;
+  padding: 0 0.5rem;
+  border-bottom: 0;
+}
+.demo-root td { padding: 0.5rem; border-bottom: 0; }
+.demo-root :focus-visible { background: transparent; }

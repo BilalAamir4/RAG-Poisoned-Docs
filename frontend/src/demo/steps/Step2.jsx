@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { demoContent, fmt } from '../demoContent.js'
 import { runDemoQuery } from '../demoApi.js'
-import { FlagChips, JargonTerm, ReplayBanner, RunStatus, StatusBadge, StepFrame } from '../parts.jsx'
+import { JargonTerm, RunRow, ReplayBanner, RunStatus, StatusBadge, StepFrame } from '../parts.jsx'
 import { recordedNormal } from '../replay.js'
 import { setNormalScores } from '../session.js'
 import { useAsyncRun } from '../useAsyncRun.js'
@@ -31,15 +31,7 @@ export default function Step2() {
 
   return (
     <StepFrame title={c.title} lead={c.lead}>
-      <p className="text-base">
-        <span className="text-muted-foreground">{c.question} </span>“{demoContent.queries.normal}”
-      </p>
-      <FlagChips flags={ALL_OFF} />
-      <div className="flex items-center gap-4">
-        <Button size="lg" className="h-12 px-6 text-base" onClick={go} disabled={run.state === 'running'}>
-          {demoContent.live.runButton}
-        </Button>
-      </div>
+      <RunRow label={c.question} question={demoContent.queries.normal} flags={ALL_OFF} onRun={go} disabled={run.state === 'running'} />
       <RunStatus run={run} onRetry={go} onShowRecorded={fixture ? () => setRecorded(fixture) : undefined} />
       {run.state === 'running' && <Skeleton className="h-24 w-full" />}
       {recorded && <ReplayBanner />}

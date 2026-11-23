@@ -25,11 +25,28 @@ import { replayMeta } from './replay.js'
 
 export function StepFrame({ title, lead, children }) {
   return (
-    <section className="flex flex-col gap-4">
-      <h1 className="text-3xl font-semibold leading-tight text-foreground">{title}</h1>
+    <section className="flex flex-col gap-3">
+      <h1 className="text-[1.7rem] font-semibold leading-tight text-foreground">{title}</h1>
       {lead && <p className="max-w-5xl text-base leading-snug text-muted-foreground">{lead}</p>}
       {children}
     </section>
+  )
+}
+
+// Question + defense chips on the left, the run button on the right (one compact row).
+export function RunRow({ label, question, flags, limit, onRun, disabled, buttonLabel }) {
+  return (
+    <div className="flex items-start justify-between gap-6">
+      <div className="flex flex-col gap-2">
+        <p className="text-base leading-snug">
+          <span className="text-muted-foreground">{label} </span>“{question}”
+        </p>
+        <FlagChips flags={flags} limit={limit} />
+      </div>
+      <Button size="lg" className="h-12 shrink-0 px-6 text-base" onClick={onRun} disabled={disabled}>
+        {buttonLabel || demoContent.live.runButton}
+      </Button>
+    </div>
   )
 }
 

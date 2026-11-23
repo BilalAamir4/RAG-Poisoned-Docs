@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { CircleCheckIcon, CircleXIcon } from 'lucide-react'
+import { CircleAlertIcon, CircleCheckIcon, CircleXIcon } from 'lucide-react'
+import { TraceCollapsible, TraceCollapsibleContent, TraceCollapsibleTrigger, TraceIcon, TraceLine, TraceTitle } from '@/components/ui/trace'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -7,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { findLeakSpans, statusColor, statusLabel } from '../../status.js'
 import { demoContent } from '../demoContent.js'
 import { getDocument, runDemoQuery } from '../demoApi.js'
-import { FlagChips, Highlight, PipelineTrace, ReplayBanner, RunStatus, StepFrame } from '../parts.jsx'
+import { Highlight, PipelineTrace, RunRow, ReplayBanner, RunStatus, StepFrame } from '../parts.jsx'
 import { recordedAttack } from '../replay.js'
 import { useAsyncRun } from '../useAsyncRun.js'
 import { finalRepeated } from '../verdicts.js'
@@ -39,15 +40,7 @@ export default function Step4() {
 
   return (
     <StepFrame title={c.title} lead={c.lead}>
-      <p className="text-base">
-        <span className="text-muted-foreground">{c.question} </span>“{demoContent.queries.trigger}”
-      </p>
-      <FlagChips flags={ALL_OFF} />
-      <div>
-        <Button size="lg" className="h-12 px-6 text-base" onClick={go} disabled={run.state === 'running'}>
-          {demoContent.live.runButton}
-        </Button>
-      </div>
+      <RunRow label={c.question} question={demoContent.queries.trigger} flags={ALL_OFF} onRun={go} disabled={run.state === 'running'} />
       <RunStatus run={run} onRetry={go} onShowRecorded={fixture ? showRecorded : undefined} />
       {run.state === 'running' && <Skeleton className="h-24 w-full" />}
       {recorded && <ReplayBanner />}
@@ -74,7 +67,15 @@ export default function Step4() {
               </CardContent>
             </Card>
           </div>
-          <PipelineTrace run={result} />
+          <TraceCollapsible>
+            <TraceCollapsibleTrigger>
+              <TraceLine>
+                <TraceIcon><CircleAlertIcon /></TraceIcon>
+                <TraceTitle>{demoContent.pipeline.title}</TraceTitle>
+              </TraceLine>
+            </TraceCollapsibleTrigger>
+            <TraceCollapsibleContent><PipelineTrace run={result} /></TraceCollapsibleContent>
+          </TraceCollapsible>
         </>
       )}
     </StepFrame>

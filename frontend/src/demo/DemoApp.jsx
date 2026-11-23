@@ -123,7 +123,7 @@ export default function DemoApp() {
   return (
     <TooltipProvider>
       <div className="demo-root sh-scope flex min-h-screen flex-col bg-background text-base text-foreground">
-        <header className="flex items-center justify-end px-8 pt-3">
+        <header className="absolute right-8 top-3 z-10">
           <a
             href="#/trace"
             data-testid="inspector-link"
@@ -133,11 +133,11 @@ export default function DemoApp() {
             {ch.inspectorLink}
           </a>
         </header>
-        <main className="mx-auto w-full max-w-[1700px] flex-1 px-8 pb-4" data-testid="demo-main" data-step={step}>
+        <main className="mx-auto w-full max-w-[1700px] flex-1 px-8 pb-3 pt-4" data-testid="demo-main" data-step={step}>
           {body}
         </main>
-        <footer className="sticky bottom-0 border-t bg-background/95 px-8 py-3 backdrop-blur">
-          <Progress value={(step / TOTAL) * 100} className="mb-3 h-2" aria-label={fmt(ch.stepOf, { n: step, total: TOTAL })} />
+        <footer className="sticky bottom-0 border-t bg-background/95 px-8 py-2 backdrop-blur">
+          <Progress value={(step / TOTAL) * 100} className="mb-2 h-1.5" aria-label={fmt(ch.stepOf, { n: step, total: TOTAL })} />
           <div className="flex items-center justify-between gap-4">
             <Button variant="outline" size="lg" className="h-12 px-6 text-base" onClick={back} data-testid="back-btn" disabled={step === 1 && stage === 0}>
               {ch.back}

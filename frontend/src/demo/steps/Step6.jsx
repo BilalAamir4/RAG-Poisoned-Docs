@@ -19,11 +19,10 @@ function TechniqueBar({ tech }) {
   const pct = (n) => (total ? (n / total) * 100 : 0)
   return (
     <div data-testid="technique-row">
-      <div className="flex items-baseline justify-between text-base">
-        <span className="font-medium">{tech.label}</span>
-        <span className="font-mono text-sm">
-          {demoContent.step6.statsBlocked} {blocked}/{total} · {demoContent.step6.statsSucceeded} {succeeded}/{total}
-        </span>
+      <div className="text-base font-medium">{tech.label}</div>
+      <div className="text-sm text-muted-foreground">
+        <span>
+          {demoContent.step6.statsBlocked} {blocked}/{total} · {demoContent.step6.statsSucceeded} {succeeded}/{total}</span>
       </div>
       <div className="mt-1 flex h-4 w-full overflow-hidden rounded bg-muted" role="img" aria-label={`${tech.label}: ${blocked} of ${total} blocked`}>
         <div className="h-full bg-[var(--status-teal)]" style={{ width: `${pct(blocked)}%` }} data-testid="bar-blocked" />

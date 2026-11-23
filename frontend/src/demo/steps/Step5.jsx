@@ -63,9 +63,9 @@ export default function Step5() {
 
   return (
     <StepFrame title={c.title} lead={c.lead}>
-      <p className="text-sm text-muted-foreground" data-testid="one-run-line">{c.oneRun}</p>
-      <div className="flex items-center gap-4">
-        <Button size="lg" className="h-12 px-6 text-base" onClick={runAll} disabled={run.state === 'running'}>{c.runAll}</Button>
+      <div className="flex items-center justify-between gap-6">
+        <p className="text-sm text-muted-foreground" data-testid="one-run-line">{c.oneRun}</p>
+        <Button size="lg" className="h-12 shrink-0 px-6 text-base" onClick={runAll} disabled={run.state === 'running'}>{c.runAll}</Button>
       </div>
       <RunStatus
         run={run}

@@ -26,6 +26,15 @@
   real computed className values, text content, and DOM attributes across state 
   transitions (neutral, attack/danger, mitigated/safe) — never assert via static 
   text grep of the source file.
+- Styling stack: Tailwind v4 via @tailwindcss/vite (legacy tailwind.config.js kept through @config) + shadcn/ui
+  (style radix-nova, JS, copied into src/components/ui). shadcn tokens are prefixed --sh-* on :root and scoped by
+  .sh-scope (demo root, tooltip and alert-dialog portals); --sh-destructive is neutral grey, never red. Status colours
+  (red/teal/amber) come only from the existing --red/--teal/--amber tokens. No Vercel AI SDK, no Next.js. Inspector
+  screens stay on their own CSS; only the Settings Reset dialog uses shadcn AlertDialog. Demo Mode (#/demo) is the
+  default landing page; all its wording lives in src/demo/demoContent.js.
+- Demo Mode sends explicit per-query mitigation flags and never changes global Settings. Verdicts are judged from the
+  response text (status.js responseLeaks), not backend final_status. Step 7 uses a separate Chroma collection
+  (sentinel_demo_sandbox), dropped on backend startup and on /settings/reset; the real faq_doc.md is never edited.
 
 ## Deployment Status
 - **Deployment paused as of 2026-09-06** — active runtime reverted to local Ollama. Railway service deleted. Vercel not yet deployed. P15's Groq validation evidence remains on file and is still valid for reactivation when redeployment is decided.
@@ -756,7 +765,7 @@ P0-P4 were developed sequentially in the workspace before git was initialized. A
   7. The Settings reset button still uses `window.confirm` (not exercised in the browser).
 
 ## Current phase
-Phase 3 — guided "Demo Mode" UI (current screens kept as "Inspector"); not started
+Phase 4 — not started (Phase 3 Guided Demo Mode DONE 2026-11-23; real-port acceptance walk pending the user's cold start-dev.ps1)
 
 ## Next phase
 P17 — Cloud Deployment (Railway + Vercel) when live demo date approaches

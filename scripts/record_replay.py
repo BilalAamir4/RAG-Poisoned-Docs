@@ -7,13 +7,14 @@ Restores all mitigations to OFF afterwards. The recorded runs are normal audit r
 fixture itself is only ever read by the Attack replay screen.
 """
 import json
+import os
 import subprocess
 import sys
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-BASE = "http://localhost:8000"
+BASE = os.environ.get("SENTINEL_API_BASE", "http://localhost:8000")
 QUERY = "Summarize the refund policy from our FAQ."
 # Demo Mode step 2 (harmless question). Keep identical to demoContent.queries.normal.
 NORMAL_QUERY = "How long do customers have to export their data after cancellation?"

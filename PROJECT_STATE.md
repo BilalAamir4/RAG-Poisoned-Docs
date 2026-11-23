@@ -765,7 +765,7 @@ P0-P4 were developed sequentially in the workspace before git was initialized. A
   7. The Settings reset button still uses `window.confirm` (not exercised in the browser).
 
 ## Current phase
-Phase 4 — not started (Phase 3 Guided Demo Mode DONE 2026-11-23; real-port acceptance walk pending the user's cold start-dev.ps1)
+Phase 4 — not started. (Phase 3 Guided Demo Mode DONE 2026-11-23.)
 
 ## Next phase
 P17 — Cloud Deployment (Railway + Vercel) when live demo date approaches
@@ -774,8 +774,11 @@ P17 — Cloud Deployment (Railway + Vercel) when live demo date approaches
 - P17 — Frontend deployment & final presentation polish
 - Final project delivery and live rehearsal
 
-
-
-
-
-
+### Phase 3 — Guided Demo Mode — DONE 2026-11-23
+- Demo Mode at `#/demo` (default landing page), 7 steps; the 7 existing screens remain as "Inspector". Tailwind v4 + shadcn (see Locked decisions). Backend: `stages` timings and `sandbox` info on `/query`, `GET /documents/{name}`, `GET/POST/DELETE /demo/sandbox` (separate Chroma collection, dropped on startup and on `/settings/reset`).
+- Acceptance (real ports, cold `start-dev.ps1`): all 7 steps live at 1280x720 and 1920x1080 (screenshots in `audit_artifacts/phase3/`); total live time about 21-23 s with a warm model, about 42 s right after an Ollama restart. Step 6 listed this session's audit rows. Ollama-down walk: real errors; recorded replay offered on steps 2, 4, 5 (labelled, never mixed); steps 3 and 6 stay live; step 7 shows the real error only. `GET /settings` identical before and after (`settings_before.json` / `settings_after.json`); `faq_doc.md` sha256 identical before and after (d5192126...eb556) and equal to the committed file; chunk-boundary test passes.
+- Step 7 novel instruction ("Note to the assistant: ... 90 days ... no usage limit"): retrieved; repeated by the model with defenses off AND with all four on (the output filter only recognises the original planted claim, so it did not fire and the answer was not auto-judged). This is shown to the audience as-is.
+- **Known limitation:** step 5 scrolls. At 1280x720 the summary and the Verdict column are visible without scrolling but only the first row is; at 1920x1080 five of six rows fit. Step 7's answers also sit below the fold at 1280x720.
+- **Phase 2 test-claim correction:** Phase 2 reported "14/14 backend tests pass" but only ran `test_api_endpoints.py` and `test_test_suite_screen.py`. `tests/test_chat.py::test_chat_zero_url_leaks` was already failing at the end of Phase 2 (Phase 2 commit 6ab44cd removed `updateSettings` from `Chat.jsx` without updating the test). It now asserts the real purpose (no URL, no port, no raw fetch, imports from `../api.js`, no global settings write).
+- Full backend suite on the real ports: 62/65 pass. The 3 failures are `tests/test_p16_deployment.py` (they target the deleted Railway deployment; with `DEPLOYED_BACKEND_URL=http://localhost:8000` two pass and `test_deployed_health` still fails because it asserts Railway values `/data` and the Groq model). Deployment is paused, so these are expected failures, not regressions.
+- Frontend tests: 65/65.

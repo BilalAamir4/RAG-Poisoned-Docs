@@ -7,7 +7,7 @@ import * as api from '../api.js';
 vi.mock('../api.js', () => ({
   fetchTestRuns: vi.fn(),
   runTestSuite: vi.fn(),
-  fetchAuditLogs: vi.fn(),
+  fetchAuditLogById: vi.fn(),
 }));
 
 describe('TestSuiteResults Component (RTL + jsdom)', () => {
@@ -264,7 +264,10 @@ describe('TestSuiteResults Component (RTL + jsdom)', () => {
 
   it('hides "View trace" and shows stored output inline when the audit record no longer exists', async () => {
     api.fetchTestRuns.mockResolvedValueOnce(mockLivePromptfooResult);
-    api.fetchAuditLogs.mockResolvedValueOnce({ logs: [{ id: 810 }] });
+    api.fetchAuditLogById.mockImplementation(async (id) => {
+      if (id === 801) throw new Error('Failed to fetch audit log 801: 404 Not Found');
+      return { id };
+    });
 
     render(<TestSuiteResults onSelectLog={vi.fn()} />);
 

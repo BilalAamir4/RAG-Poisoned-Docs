@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { fetchTestRuns, runTestSuite, fetchAuditLogs } from '../api.js'
+import { fetchTestRuns, runTestSuite, fetchAuditLogById } from '../api.js'
 import { statusColor, statusLabel } from '../status.js'
 
 export default function TestSuiteResults({ onSelectLog }) {
@@ -7,16 +7,24 @@ export default function TestSuiteResults({ onSelectLog }) {
   const [loading, setLoading] = useState(true)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState(null)
-  // ids of audit rows that still exist; null = could not be determined (keep links)
-  const [auditIds, setAuditIds] = useState(null)
+  // audit ids confirmed missing (404) — those trials show their stored output inline
+  const [missingAuditIds, setMissingAuditIds] = useState(new Set())
 
-  const refreshAuditIds = async () => {
-    try {
-      const res = await fetchAuditLogs({ limit: 1000 })
-      setAuditIds(new Set((res.logs || []).map((l) => l.id)))
-    } catch (_) {
-      setAuditIds(null)
-    }
+  // Existence is checked per trial id (GET /audit-log/{id}); only a 404 marks the row as gone.
+  // Any other failure leaves the link in place (unknown is not "missing").
+  const refreshAuditIds = async (trials) => {
+    const ids = [...new Set((trials || []).map((t) => t.audit_id).filter((v) => v != null))]
+    const gone = new Set()
+    await Promise.all(
+      ids.map(async (id) => {
+        try {
+          await fetchAuditLogById(id)
+        } catch (err) {
+          if (/404/.test(String(err?.message))) gone.add(id)
+        }
+      })
+    )
+    setMissingAuditIds(gone)
   }
 
   const loadData = async () => {
@@ -25,7 +33,7 @@ export default function TestSuiteResults({ onSelectLog }) {
       setError(null)
       const res = await fetchTestRuns()
       setData(res)
-      await refreshAuditIds()
+      await refreshAuditIds(res.trials)
     } catch (err) {
       setError(err.message || 'Failed to load test suite results')
     } finally {
@@ -43,7 +51,7 @@ export default function TestSuiteResults({ onSelectLog }) {
       setError(null)
       const res = await runTestSuite()
       setData(res)
-      await refreshAuditIds()
+      await refreshAuditIds(res.trials)
     } catch (err) {
       setError(err.message || 'Failed to execute Promptfoo test suite')
     } finally {
@@ -313,7 +321,7 @@ export default function TestSuiteResults({ onSelectLog }) {
                         </span>
                       </td>
                       <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                        {trial.audit_id != null && (auditIds === null || auditIds.has(trial.audit_id)) ? (
+                        {trial.audit_id != null && !missingAuditIds.has(trial.audit_id) ? (
                         <button
                           className="text-xs text-violet hover:underline font-mono"
                           onClick={() => {

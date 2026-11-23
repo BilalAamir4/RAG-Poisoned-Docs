@@ -95,7 +95,12 @@ export async function sendQuery(payload) {
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
-    throw new Error(`Query execution failed: ${response.status} ${response.statusText}`);
+    let detail = `${response.status} ${response.statusText}`;
+    try {
+      const errJson = await response.json();
+      if (errJson && typeof errJson.detail === 'string') detail = errJson.detail;
+    } catch { /* body was not JSON; keep the status line */ }
+    throw new Error(`Query execution failed: ${detail}`);
   }
   return response.json();
 }

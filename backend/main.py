@@ -135,11 +135,16 @@ def run_query(request: QueryRequest):
 
     top_k = request.similarity_top_k if request.similarity_top_k and request.similarity_top_k > 0 else 3
 
-    result = pipeline.query_pipeline(
-        query=request.query,
-        mitigation_flags=flags,
-        similarity_top_k=top_k,
-    )
+    try:
+        result = pipeline.query_pipeline(
+            query=request.query,
+            mitigation_flags=flags,
+            similarity_top_k=top_k,
+        )
+    except RuntimeError as err:
+        # LLM failure (timeout, empty completion). HTTPException is handled inside the CORS
+        # middleware, so the browser can read the real message instead of "Failed to fetch".
+        raise HTTPException(status_code=502, detail=f"LLM generation failed: {err}")
 
     return {
         "query": result["query"],

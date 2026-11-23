@@ -737,6 +737,14 @@ P0-P4 were developed sequentially in the workspace before git was initialized. A
   - All 7 FABRICATED items and the 5 wrong DERIVED formulas from `PHASE1_AUDIT.md` §4 are Phase 2 fixes.
   - Add CORS headers to error responses (so the UI can show the real error instead of "Failed to fetch").
 
+### Phase 2 — demo reliability — IN PROGRESS (started 2026-11-23)
+Done so far (uncommitted):
+- `start-dev.ps1` rewritten: starts Ollama with `OLLAMA_CONTEXT_LENGTH=8192` if it isn't running, checks `LLM_MODEL` is installed, starts the backend without `--reload`, waits for `/health`, warms the model (`keep_alive` 60 min) and checks the loaded context length, then starts Vite; Ctrl+C stops only what it started. Tested from a cold stop: healthy in about 1 minute, warm-up 20 s, context confirmed 8192.
+- Temperature 0 / seed 42: verified as the defaults in `llm_client.generate`; `pipeline.py:271` is the only caller and uses the defaults. No change needed.
+- Provider choice: stay on local `llama3.1:8b` (no deployment for the demo); hosted Groq is not used.
+- Error path: `/query` now converts LLM failures into HTTP 502 with a readable `detail` (inside the CORS middleware, so the header is present); `api.js` `sendQuery` surfaces that detail. Verified with Ollama stopped: 502, `access-control-allow-origin` present, no audit row written. Frontend tests: 34/34 pass.
+Remaining: replay fallback for the Attack replay screen (recorded result when the backend/LLM is down), stale Live-trace state after a failed run, the 7 FABRICATED items and 5 wrong DERIVED formulas (PHASE1_AUDIT.md §4), Chat toggle display-only, Promptfoo re-run on llama3.1:8b.
+
 ## Current phase
 Phase 2 — demo reliability (pending Phase 1 review)
 

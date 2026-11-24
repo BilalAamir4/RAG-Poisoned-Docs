@@ -49,9 +49,12 @@ def test_frontend_dev_server_serves_html():
     res = requests.get(url, timeout=5)
     assert res.status_code == 200
     html = res.text
-    assert "PoisonDoc" in html
-    assert "IBM+Plex+Sans" in html
-    assert "IBM+Plex+Mono" in html
+    assert "RAG Poisoned Docs" in html
+    # Fonts are bundled (no network needed): no Google Fonts link, and main.jsx imports the @fontsource packages.
+    assert "fonts.googleapis.com" not in html
+    main = requests.get("http://127.0.0.1:5173/src/main.jsx", timeout=5).text
+    assert "@fontsource/ibm-plex-sans" in main or "ibm-plex-sans" in main
+    assert "@fontsource/ibm-plex-mono" in main or "ibm-plex-mono" in main
     assert 'id="root"' in html
 
 

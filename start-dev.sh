@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-echo "=== PoisonDoc - Development Launcher ==="
+echo "=== RAG Poisoned Docs - Development Launcher ==="
 
 # Step 1: Environment files setup
 echo "[1/4] Checking environment configurations..."
@@ -32,7 +32,7 @@ if curl -s -f http://localhost:11434/api/tags > /dev/null 2>&1; then
     echo "  [PASS] Ollama is running and reachable at http://localhost:11434"
 else
     echo "  [FAIL] Ollama is NOT reachable at http://localhost:11434"
-    echo "  Please start Ollama ('ollama serve') before running PoisonDoc."
+    echo "  Please start Ollama ('ollama serve') before running RAG Poisoned Docs."
     exit 1
 fi
 

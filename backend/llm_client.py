@@ -1,5 +1,5 @@
 """
-PoisonDoc - Swappable LLM Client
+RAG Poisoned Docs - Swappable LLM Client
 OpenAI-compatible /v1/chat/completions client.
 All LLM generation in the application MUST go through generate().
 """

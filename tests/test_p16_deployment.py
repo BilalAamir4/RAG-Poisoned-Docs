@@ -1,5 +1,5 @@
 """
-PoisonDoc - Phase P16 Deployment Acceptance Tests
+RAG Poisoned Docs - Phase P16 Deployment Acceptance Tests
 Validates the live Railway-deployed FastAPI backend:
 - Health check (DB + LLM connectivity)
 - Knowledge base document indexing on persistent volume

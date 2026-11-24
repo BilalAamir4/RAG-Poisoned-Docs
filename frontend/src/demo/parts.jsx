@@ -124,7 +124,7 @@ export function RunStatus({ run, kind = 'query', onRetry, onShowRecorded, record
     return (
       <Alert data-testid="run-loading">
         <Spinner />
-        <AlertTitle>{fmt(exp.measured ? c.running : c.runningTypical, { n: exp.n })}</AlertTitle>
+        <AlertTitle>{fmt(kind === 'table' ? (exp.measured ? c.runningTable : c.runningTableTypical) : exp.measured ? c.running : c.runningTypical, { n: exp.n })}</AlertTitle>
         <AlertDescription className="flex items-center gap-3">
           {fmt(c.elapsed, { n: run.elapsed })}
           <Button size="sm" variant="outline" onClick={run.cancel}>{c.cancel}</Button>

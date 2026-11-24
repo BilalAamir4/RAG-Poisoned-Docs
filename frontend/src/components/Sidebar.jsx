@@ -117,7 +117,7 @@ export default function Sidebar({ activeRoute, onNavigate }) {
         <svg className="icon" viewBox="0 0 24 24">
           <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
         </svg>
-        <span className="label">PoisonDoc</span>
+        <span className="label">RAG Poisoned Docs</span>
       </div>
 
       <LineSidebar

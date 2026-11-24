@@ -1,5 +1,5 @@
 """
-PoisonDoc - Configuration Module
+RAG Poisoned Docs - Configuration Module
 Single source of truth for all environment configuration.
 All other modules must import config from here and NEVER call os.environ/os.getenv directly.
 """

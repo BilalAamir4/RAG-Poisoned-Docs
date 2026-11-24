@@ -144,3 +144,17 @@ describe('step 7 no-change fact line', () => {
     expect(screen.queryByTestId('step7-no-change')).toBeNull()
   })
 })
+
+describe('step 5 expected wait covers all six runs', () => {
+  it('shows six times the single-query estimate, not the single-query time', async () => {
+    api.getSettingsReadOnly.mockResolvedValue({ mitigations: { threshold_value: 0.3 } })
+    api.runDemoQuery.mockImplementation(() => new Promise(() => {})) // never resolves: stays in the running state
+    wrap(<Step5 />)
+    fireEvent.click(screen.getByText(demoContent.step5.runAll))
+    const banner = await screen.findByTestId('run-loading')
+    const six = demoContent.step5.rows.length
+    const n = Number(banner.textContent.match(/about (\d+) s/)[1])
+    expect(banner).toHaveTextContent('Running all six')
+    expect(n).toBe(demoContent.typicalSeconds.query * six)
+  })
+})

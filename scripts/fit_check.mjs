@@ -16,6 +16,9 @@ fs.mkdirSync(out, { recursive: true })
 const tag = `${w}x${h}${z === 1 ? '' : `_z${Math.round(z * 100)}`}`
 const browser = await chromium.launch({ channel: 'chrome', headless: true })
 const ctx = await browser.newContext({ viewport: { width: Math.round(Number(w) / z), height: Math.round(Number(h) / z) }, deviceScaleFactor: z })
+// Network off: every request that is not to localhost is aborted and reported (fonts must be bundled).
+const blocked = []
+await ctx.route((u) => !['localhost', '127.0.0.1'].includes(u.hostname), (r) => { blocked.push(r.request().url()); return r.abort() })
 const page = await ctx.newPage()
 page.on('pageerror', (e) => console.log('PAGEERROR', e.message))
 
@@ -114,6 +117,8 @@ await page.getByRole('button', { name: 'Restore original documents' }).click()
 await page.getByRole('button', { name: 'Restore', exact: true }).click()
 await page.waitForSelector('[data-testid=restored]')
 
+const fontCheck = await page.evaluate(async () => { await document.fonts.ready; return { sans: document.fonts.check('20px "IBM Plex Sans"'), mono: document.fonts.check('20px "IBM Plex Mono"'), loaded: [...document.fonts].filter((f) => f.status === 'loaded').map((f) => `${f.family} ${f.weight}`) } })
+console.log('EXTERNAL REQUESTS BLOCKED:', JSON.stringify(blocked), 'FONTS:', JSON.stringify(fontCheck))
 if (mode === 'record') fs.writeFileSync(cache, JSON.stringify(recorded))
 for (const [k, m] of Object.entries(report)) {
   const keys = Object.keys(m.bottoms || {})

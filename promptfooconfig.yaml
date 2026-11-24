@@ -1,8 +1,8 @@
-# PoisonDoc - Promptfoo Security Evaluation Configuration
+# RAG Poisoned Docs - Promptfoo Security Evaluation Configuration
 # Single source of truth: shared environment variables loaded from backend/.env
 # Swapping providers later in P15 touches ONLY backend/.env — zero YAML edits
 
-description: 'PoisonDoc Security Evaluation Suite'
+description: 'RAG Poisoned Docs Security Evaluation Suite'
 
 # Shared environment file containing LLM_BASE_URL, LLM_API_KEY, LLM_MODEL
 envFile: 'backend/.env'

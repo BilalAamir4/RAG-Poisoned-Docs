@@ -5,7 +5,7 @@ export const fmt = (template, vars = {}) =>
   String(template).replace(/\{(\w+)\}/g, (_, k) => (vars[k] !== undefined ? String(vars[k]) : `{${k}}`))
 
 export const demoContent = {
-  brand: { name: 'PoisonDoc', tagline: 'prompt injection attacks and defenses in RAG' },
+  brand: { name: 'RAG Poisoned Docs', tagline: 'prompt injection attacks and defenses in RAG' },
   docName: 'faq_doc.md',
   queries: {
     normal: 'How long do customers have to export their data after cancellation?',
@@ -36,6 +36,8 @@ export const demoContent = {
     runButton: 'Run it live',
     running: 'Running the query — usually about {n} s',
     runningTypical: 'Running the query — typically about {n} s',
+    runningTable: 'Running all six — usually about {n} s',
+    runningTableTypical: 'Running all six — typically about {n} s',
     elapsed: '{n} s so far',
     cancel: 'Cancel',
     errorTitle: 'The live run failed',

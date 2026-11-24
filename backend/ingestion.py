@@ -1,5 +1,5 @@
 """
-PoisonDoc - Ingestion Pipeline
+RAG Poisoned Docs - Ingestion Pipeline
 LlamaIndex retrieval pipeline:
 - Document loading from DATA_DIR/documents
 - SentenceSplitter chunking (300-500 tokens, overlapping)

@@ -1,4 +1,4 @@
-# PoisonDoc — presenter script
+# RAG Poisoned Docs — presenter script
 
 Sized for **10 minutes of presenting + 5 minutes Q&A** (15 total). If your slot is different, scale the budgets in the table below; the order and wording stay the same.
 Wording on screen comes from `frontend/src/demo/demoContent.js`; what you say below builds on it and never contradicts it.
@@ -25,12 +25,12 @@ Measured waits on the development laptop (warm model, `llama3.1:8b`): step 2 abo
 - [ ] Warm-up done: open `http://localhost:5173/#/demo` and do one throwaway run on step 2 ("Run it live"); it should answer in a few seconds. Then reset again (previous line) so the evidence screen is clean.
 - [ ] **Browser at 100% zoom on the presenting laptop** (Ctrl+0). Window maximised. Check that every step shows its content above the bottom bar.
 - [ ] Open a second tab on the Inspector: `http://localhost:5173/#/trace` (backup, see failure plans).
-- [ ] **No internet in the room?** Nothing in the demo needs it at run time: the model, the embedding model and all documents are local. The only effect is that the UI font (IBM Plex) cannot load from Google Fonts and falls back to a system font; text widths change slightly, so look through all 7 steps once offline before the talk. Do the `ollama pull` and the first `start-dev.ps1` while you still have internet.
+- [ ] **No internet in the room?** Nothing in the demo needs it at run time: the model, the embedding model, the documents and the UI fonts are all local. Do the `ollama pull`, `pip install` and `npm install` at home beforehand and rehearse once with Wi-Fi off (see REHEARSAL_SETUP.md).
 - [ ] Know the keys: Right/Left arrow = next/back (not while typing in the box on step 7).
 
 ## Step 1 — How an AI answers from documents (1:30)
 
-**On screen:** the PoisonDoc title line and an empty diagram. **Do:** press → four times, one box per press.
+**On screen:** the RAG Poisoned Docs title line and an empty diagram. **Do:** press → four times, one box per press.
 **Say:** "I'll show you how a company chatbot can be tricked, and how far four defenses get us. First, how these assistants work. Think of a librarian: they don't know every book, they fetch the few pages that matter, read them, and answer. [→] You ask. [→] The system finds the pages closest in meaning to your question. [→] It hands those pages to the AI with a short set of rules. [→] You get one answer, and you usually never see the pages the AI read. The AI trusts whatever is written on those pages. That's the weak spot."
 **Wait:** none. **If it fails:** no live parts; just keep going.
 
@@ -54,7 +54,7 @@ Measured waits on the development laptop (warm model, `llama3.1:8b`): step 2 abo
 
 ## Step 5 — Can the defenses stop it? (2:15)
 
-**On screen:** six cards. **Do:** click **Run all six live**. The banner says "usually about 2 s": it's about **13–15 s** for all six, say so. Cards fill in one by one.
+**On screen:** six cards. **Do:** click **Run all six live**. The banner shows the expected time for all six runs together. Cards fill in one by one.
 **Say (during the wait):** "Now six runs: no defenses, each defense on by itself, then all four." **Then read the summary line aloud as it appears.** On the run on record the summary reads: blocked by the output filter; delimiter, sanitization and flag threshold did not block; all four together blocked. "So the filter caught it, the others didn't. Real systems layer defenses so one gap isn't enough."
 **Be honest about two cards:** open "Show full answer" on **Output filter**: "The model still repeated the claim. The filter caught it afterwards, by matching the planted wording." Point at **Flag threshold**: "It only marks passages scoring above a limit, which are the *most relevant* passages, not the suspicious ones; the note says how many harmless passages from step 2 would be marked too. It never blocks anything."
 **One run is a snapshot** (the screen says so). Read the summary that appears, not the one above, if it differs.

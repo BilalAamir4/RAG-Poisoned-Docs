@@ -1,5 +1,5 @@
 /**
- * PoisonDoc — Central API Client
+ * RAG Poisoned Docs — Central API Client
  *
  * This module is the single, centralized place in the frontend that reads
  * import.meta.env.VITE_API_BASE_URL and constructs backend URLs.

@@ -1,5 +1,5 @@
 """
-PoisonDoc - FastAPI Application Layer
+RAG Poisoned Docs - FastAPI Application Layer
 Exposes the RAG pipeline (P1-P4) as a clean REST API (Spec 1.10 & 2.4).
 Endpoints:
 - GET /health: Health check (LLM reachable, DB reachable, config status)
@@ -32,7 +32,7 @@ import pipeline
 import promptfoo_runner
 
 app = FastAPI(
-    title="PoisonDoc API",
+    title="RAG Poisoned Docs API",
     description="AI & Agentic Automation Security Platform - REST API",
     version="1.0.0",
 )

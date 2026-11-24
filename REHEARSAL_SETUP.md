@@ -1,6 +1,6 @@
 # Rehearsal setup — fresh clone to running demo (presenting laptop)
 
-Run every command in **PowerShell**. Do this while you still have internet; afterwards the demo runs offline. Each step lists the output to expect (values such as seconds will differ).
+Run every command in **PowerShell**. **Do sections 1–5 at home, with internet, first** (Ollama model, pip and npm dependencies, embedding model download on the first start). The demo itself needs no network: the fonts are bundled. Section 6b is a full rehearsal with Wi-Fi off. Each step lists the output to expect (values such as seconds will differ).
 
 ## 1. Install the tools (once)
 
@@ -54,7 +54,7 @@ The embedding model (`sentence-transformers/all-MiniLM-L6-v2`) downloads automat
 If PowerShell blocks scripts: `powershell -ExecutionPolicy Bypass -File .\start-dev.ps1`. Expect, in order (times are from a cold start on the development laptop: about 78 s in total):
 
 ```
-=== PoisonDoc - Launcher ===
+=== RAG Poisoned Docs - Launcher ===
 [1/6] Checking environment files...
   [WARN] Copied backend/.env.example -> backend/.env      (first run only; same for frontend)
   [PASS] .env ready (LLM_MODEL=llama3.1:8b)
@@ -95,9 +95,20 @@ Expect the hash `D51921268C433FDE54CB21A4850BD9F446E1084EF04A9D4A35169C74E31EB55
 
 ## 6. Check the demo in the browser (100% zoom)
 
-Open Chrome at `http://localhost:5173`, press Ctrl+0 (100% zoom), maximise. Expect the PoisonDoc title line "PoisonDoc — prompt injection attacks and defenses in RAG" and an empty diagram. Walk the 7 steps with PRESENTER_SCRIPT.md and note, per step, the time you spend and any glitch (template below). Check that every step's content is above the bottom bar.
+Open Chrome at `http://localhost:5173`, press Ctrl+0 (100% zoom), maximise. Expect the RAG Poisoned Docs title line "RAG Poisoned Docs — prompt injection attacks and defenses in RAG" and an empty diagram. Walk the 7 steps with PRESENTER_SCRIPT.md and note, per step, the time you spend and any glitch (template below). Check that every step's content is above the bottom bar.
 
 Then repeat once with **Ollama stopped** (quit it from the tray, or `Stop-Process -Name ollama* -Force`) following each step's failure plan: steps 2, 4, 5 should show the red "The live run failed" box and offer "Show recorded run(s)" with the banner "Recorded replay — <date>, <model> — not a live run"; step 7 shows only the error; 3 and 6 still work. Start Ollama again with `.\start-dev.ps1` (stop the old one first with Ctrl+C).
+
+## 6b. Fully offline run (part of the rehearsal)
+
+After one successful online start (section 5, which also downloads the embedding model into the cache):
+
+1. Stop everything (Ctrl+C in the launcher window; quit Ollama from the tray).
+2. **Turn Wi-Fi off** (and unplug Ethernet). Check: `Test-NetConnection 8.8.8.8 -InformationLevel Quiet` prints `False`.
+3. `.\start-dev.ps1` again. Expect the same lines as in section 5, with no `[FAIL]`, in about the same time. If the backend fails to start offline, note the exact error: it means a model file was not cached (re-do section 5 online first).
+4. Reset, then walk all 7 steps with PRESENTER_SCRIPT.md at 100% zoom. Expect the same look as online: the title and body use IBM Plex (bundled), and nothing waits on the network. In Chrome DevTools (F12) > Network, no request should be red or pending for `fonts.googleapis.com` (there should be none at all).
+5. Write down the per-step times and glitches in the template below, marked "offline".
+6. Turn Wi-Fi back on afterwards.
 
 ## 7. Optional: automated timed walk
 

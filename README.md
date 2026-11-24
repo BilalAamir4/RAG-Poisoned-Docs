@@ -1,10 +1,10 @@
-# PoisonDoc
+# RAG Poisoned Docs
 
-**rag-poisoned-docs — prompt injection attacks and defenses in RAG.**
+**rag-poisoned-docs — prompt injection attacks and defenses in RAG.** (Display name: RAG Poisoned Docs; repository: `rag-poisoned-docs`.)
 
-PoisonDoc is a small, runnable lab that plants a hidden instruction inside a company FAQ and shows a local AI assistant repeating it as fact (indirect prompt injection against retrieval-augmented generation). It then switches on four defenses one by one, measures what each one really stops, and lets you try your own wording to see what gets through.
+RAG Poisoned Docs is a small, runnable lab that plants a hidden instruction inside a company FAQ and shows a local AI assistant repeating it as fact (indirect prompt injection against retrieval-augmented generation). It then switches on four defenses one by one, measures what each one really stops, and lets you try your own wording to see what gets through.
 
-![PoisonDoc Demo Mode, step 5: the six defense settings, each run live](docs/images/demo-step5-defenses.png)
+![RAG Poisoned Docs Demo Mode, step 5: the six defense settings, each run live](docs/images/demo-step5-defenses.png)
 
 ## What it demonstrates
 
@@ -72,7 +72,7 @@ The defenses are tuned to the original claim, so a reworded claim is not recogni
 
 ## How to run
 
-**Prerequisites:** Windows with PowerShell, Python 3.11+, Node.js 18+, and [Ollama](https://ollama.com). Internet is needed once to download the model and the embedding model, and the UI loads its fonts from Google Fonts (it falls back to system fonts offline).
+**Prerequisites:** Windows with PowerShell, Python 3.11+, Node.js 18+, and [Ollama](https://ollama.com). Internet is needed only once, to download the models and the npm/pip dependencies; the UI fonts are bundled, so afterwards everything runs offline.
 
 ```powershell
 ollama pull llama3.1:8b

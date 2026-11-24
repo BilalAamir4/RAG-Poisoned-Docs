@@ -18,7 +18,7 @@ const names = (ids) => ids.map((id) => demoContent.step5.defenseNames[id]).join(
 
 export default function Step5() {
   const c = demoContent.step5
-  const run = useAsyncRun('query')
+  const run = useAsyncRun('table')
   const [results, setResults] = useState({}) // rowId -> live response
   const [recorded, setRecorded] = useState(false) // the whole table is recorded, or none of it is
   const [current, setCurrent] = useState(null)
@@ -68,6 +68,7 @@ export default function Step5() {
       </div>
       <RunStatus
         run={run}
+        kind="table"
         onRetry={runAll}
         onShowRecorded={canReplay ? showRecorded : undefined}
         recordedLabel={demoContent.live.showRecordedTable}

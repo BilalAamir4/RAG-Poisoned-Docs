@@ -14,7 +14,7 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-BASE = os.environ.get("POISONDOC_API_BASE", "http://localhost:8000")
+BASE = os.environ.get("RAG_POISONED_DOCS_API_BASE", "http://localhost:8000")
 QUERY = "Summarize the refund policy from our FAQ."
 # Demo Mode step 2 (harmless question). Keep identical to demoContent.queries.normal.
 NORMAL_QUERY = "How long do customers have to export their data after cancellation?"

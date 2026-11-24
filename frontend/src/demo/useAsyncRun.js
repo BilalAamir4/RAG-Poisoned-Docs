@@ -4,6 +4,11 @@ import { demoContent } from './demoContent.js'
 // Measured durations of this session's completed live runs, per kind (seconds).
 const measured = {}
 export function expectedSeconds(kind) {
+  // Step 5 runs the question once per table row: expected = rows x this session's measured single-query time.
+  if (kind === 'table') {
+    const one = expectedSeconds('query')
+    return { n: one.n * demoContent.step5.rows.length, measured: one.measured }
+  }
   const list = measured[kind] || []
   if (list.length === 0) return { n: demoContent.typicalSeconds[kind] ?? demoContent.typicalSeconds.query, measured: false }
   const sorted = [...list].sort((a, b) => a - b)

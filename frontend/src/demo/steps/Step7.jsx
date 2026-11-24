@@ -18,33 +18,47 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { demoContent, fmt } from '../demoContent.js'
 import { dropSandbox, getSandbox, plantSandbox, runDemoQuery } from '../demoApi.js'
-import { FlagChips, PipelineTrace, RunStatus, StepFrame } from '../parts.jsx'
+import { PipelineTrace, RunStatus, StepFrame } from '../parts.jsx'
 import { expectedSeconds, useAsyncRun } from '../useAsyncRun.js'
+import { step7SameAnswer } from '../verdicts.js'
 import { ALL_OFF } from './Step2.jsx'
 
 const ALL_ON = Object.fromEntries(Object.keys(ALL_OFF).map((k) => [k, true]))
 
-function ResultCard({ title, flags, run }) {
+function ResultCard({ title, run }) {
   const c = demoContent.step7
   const st = run.stages
+  const same = String(run.raw_response ?? '').trim() === String(run.response ?? '').trim()
   const filter = !st?.output_filter_ran ? c.filterOff : st.output_filter_blocked ? c.filterBlocked : c.filterPassed
   return (
     <Card data-testid="step7-result">
       <CardHeader>
         <CardTitle className="text-base">{title}</CardTitle>
-        <FlagChips flags={flags} />
       </CardHeader>
-      <CardContent className="flex flex-col gap-2 text-base leading-snug">
-        <div>
-          <div className="text-sm text-muted-foreground">{c.raw}</div>
-          <p data-testid="step7-raw">{run.raw_response}</p>
-        </div>
-        <div>
-          <div className="text-sm text-muted-foreground">{c.final}</div>
-          <p data-testid="step7-final">{run.response}</p>
-        </div>
-        <Badge variant="gray">{fmt(c.filterLine, { result: filter })}</Badge>
-        <PipelineTrace run={run} />
+      <CardContent className="flex flex-col gap-2 text-sm leading-snug">
+        {same ? (
+          <div>
+            <div className="text-sm text-muted-foreground">{c.rawIsFinal}</div>
+            <p className="text-sm" data-testid="step7-raw">{run.raw_response}</p>
+            <span hidden data-testid="step7-final">{run.response}</span>
+          </div>
+        ) : (
+          <>
+            <div>
+              <div className="text-sm text-muted-foreground">{c.raw}</div>
+              <p className="text-sm" data-testid="step7-raw">{run.raw_response}</p>
+            </div>
+            <div>
+              <div className="text-sm text-muted-foreground">{c.final}</div>
+              <p className="text-sm" data-testid="step7-final">{run.response}</p>
+            </div>
+          </>
+        )}
+        <Badge variant="gray" className="self-start">{fmt(c.filterLine, { result: filter })}</Badge>
+        <details className="text-sm text-muted-foreground">
+          <summary className="cursor-pointer">{demoContent.pipeline.title}</summary>
+          <PipelineTrace run={run} />
+        </details>
       </CardContent>
     </Card>
   )
@@ -95,25 +109,25 @@ export default function Step7({ onSandboxChange, registerRestore }) {
   const out = run.data
 
   return (
-    <StepFrame title={c.title} lead={c.lead}>
+    <StepFrame title={c.title} lead={out ? null : c.lead}>
       <label htmlFor="instruction" className="text-base font-medium">{c.inputLabel}</label>
-      <Textarea
-        id="instruction"
-        data-testid="instruction-input"
-        className="min-h-0 text-base" rows={2}
-        placeholder={c.placeholder}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        disabled={run.state === 'running'}
-      />
-      <div className="flex flex-wrap items-center gap-4">
-        <Button size="lg" className="h-12 px-6 text-base" onClick={go} disabled={!text.trim() || tooLong || run.state === 'running'}>
+      <div className="flex items-start gap-4">
+        <Textarea
+          id="instruction"
+          data-testid="instruction-input"
+          className="min-h-0 flex-1 text-base" rows={2}
+          placeholder={c.placeholder}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          disabled={run.state === 'running'}
+        />
+        <Button size="lg" className="h-12 shrink-0 px-6 text-base" onClick={go} disabled={!text.trim() || tooLong || run.state === 'running'}>
           {c.plant}
         </Button>
-        {maxChars != null && (
-          <span className="text-sm text-muted-foreground" data-testid="counter">{fmt(c.counter, { n: text.length, max: maxChars })}</span>
-        )}
-        <span className="text-sm text-muted-foreground">{fmt(c.waitLine, { n: exp.n + demoContent.typicalSeconds.sandboxBuild })}</span>
+      </div>
+      <div className="flex flex-wrap items-center gap-x-4 text-sm text-muted-foreground">
+        {maxChars != null && <span data-testid="counter">{fmt(c.counter, { n: text.length, max: maxChars })}</span>}
+        <span>{fmt(c.waitLine, { n: exp.n + demoContent.typicalSeconds.sandboxBuild })}</span>
       </div>
       <RunStatus run={run} kind="sandbox" onRetry={go} />
       {run.state === 'running' && <Skeleton className="h-20 w-full" aria-label={c.building} />}
@@ -123,9 +137,12 @@ export default function Step7({ onSandboxChange, registerRestore }) {
             <CircleAlertIcon />
             <AlertTitle>{out.off.sandbox?.planted_text_in_retrieved ? c.retrieved : c.notRetrieved}</AlertTitle>
           </Alert>
+          {step7SameAnswer(out) && (
+            <p className="text-base font-semibold" data-testid="step7-same-answer">{c.sameAnswerLine}</p>
+          )}
           <div className="grid grid-cols-2 gap-4">
-            <ResultCard title={c.colOff} flags={ALL_OFF} run={out.off} />
-            <ResultCard title={c.colOn} flags={ALL_ON} run={out.on} />
+            <ResultCard title={c.colOff} run={out.off} />
+            <ResultCard title={c.colOn} run={out.on} />
           </div>
           <p className="text-sm text-muted-foreground" data-testid="auto-check-note">{c.autoCheckNote}</p>
         </>

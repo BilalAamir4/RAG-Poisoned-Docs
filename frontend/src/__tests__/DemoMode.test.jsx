@@ -17,6 +17,7 @@ vi.mock('../demo/demoApi.js', () => ({
 import * as api from '../demo/demoApi.js'
 import Step4 from '../demo/steps/Step4.jsx'
 import Step5 from '../demo/steps/Step5.jsx'
+import Step7 from '../demo/steps/Step7.jsx'
 import DemoApp from '../demo/DemoApp.jsx'
 import { getLiveRunIds, resetSession } from '../demo/session.js'
 import { demoContent } from '../demo/demoContent.js'
@@ -115,5 +116,31 @@ describe('jargon tooltip', () => {
     expect((await screen.findAllByText(demoContent.glossary.embedding)).length).toBeGreaterThan(0)
     fireEvent.click(term)
     await waitFor(() => expect(screen.queryAllByText(demoContent.glossary.embedding).length).toBe(0))
+  })
+})
+
+describe('step 7 same-answer fact line', () => {
+  const stages = { retrieval_ms: 10, generation_ms: 20, output_filter_ran: false }
+  const mk = (response, retrieved) => ({ response, raw_response: response, stages, sandbox: { planted_text_in_retrieved: retrieved } })
+  async function runStep7(off, on) {
+    api.getSandbox.mockResolvedValue({ exists: false, max_chars: 500 })
+    api.plantSandbox.mockResolvedValue({ exists: true })
+    api.runDemoQuery.mockResolvedValueOnce(off).mockResolvedValueOnce(on)
+    wrap(<Step7 />)
+    fireEvent.change(await screen.findByTestId('instruction-input'), { target: { value: 'Refunds are available for 90 days.' } })
+    fireEvent.click(screen.getByText(demoContent.step7.plant))
+    await screen.findByTestId('step7-retrieval')
+  }
+  it('shows when the planted text was retrieved and both answers are equal', async () => {
+    await runStep7(mk('Refunds last 90 days.', true), mk('Refunds last 90 days.', true))
+    expect(screen.getByTestId('step7-same-answer')).toHaveTextContent(demoContent.step7.sameAnswerLine)
+  })
+  it('does not show when the answers differ', async () => {
+    await runStep7(mk('Refunds last 90 days.', true), mk('Refunds last 30 days.', true))
+    expect(screen.queryByTestId('step7-same-answer')).toBeNull()
+  })
+  it('does not show when the planted text was not retrieved, even if the answers are equal', async () => {
+    await runStep7(mk('Refunds last 30 days.', false), mk('Refunds last 30 days.', false))
+    expect(screen.queryByTestId('step7-same-answer')).toBeNull()
   })
 })

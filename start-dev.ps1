@@ -72,7 +72,7 @@ for ($i = 0; $i -lt 60 -and -not $health; $i++) {
 }
 if (-not $health) { Fail "Backend did not become healthy within 120 s (see its console window)." }
 if (-not $health.llm_reachable) { Fail "Backend is up but cannot reach the LLM at $llmBase." }
-Pass "Backend healthy (model: $($health.model))"
+Pass "Backend healthy (model: $($health.model)); embedding model warmed at startup"
 
 # [5/6] Warm-up: load the model into memory and keep it there, so the first demo query is not a cold start
 Write-Host "[5/6] Warming up $model (can take up to a minute on a cold start)..."

@@ -3,7 +3,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { TraceCollapsible, TraceCollapsibleContent, TraceCollapsibleTrigger, TraceIcon, TraceLine, TraceTitle } from '@/components/ui/trace'
 import { CircleCheckIcon, CircleXIcon, FlagIcon, CircleAlertIcon } from 'lucide-react'
 import { DEFENSE_KEYS } from '../../status.js'
@@ -76,7 +75,7 @@ export default function Step5() {
       {recorded && <ReplayBanner />}
       {table.rows.every((r) => r.run) && (
         <Alert data-testid="step5-summary">
-          <AlertTitle className="flex flex-col gap-1 text-base">
+          <AlertTitle className="flex flex-row flex-wrap gap-x-6 gap-y-0 text-base">
             {!table.baselineLeaked ? (
               <span>{c.summaryNothing}</span>
             ) : (
@@ -98,88 +97,68 @@ export default function Step5() {
           )}
         </Alert>
       )}
-      <Table data-testid="step5-table">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-1/4">{c.colDefense}</TableHead>
-            <TableHead>{c.colRaw}</TableHead>
-            <TableHead className="w-2/5">{c.colUser}</TableHead>
-            <TableHead>{c.colVerdict}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {table.rows.map((r) => {
-            const def = c.rows.find((x) => x.id === r.id)
-            const flags = Object.fromEntries(DEFENSE_KEYS.map((k) => [k, def.on.includes(k)]))
-            const stopped = r.run && r.id !== 'none' ? whereStopped(r.run) : null
-            const flagged = r.run?.stages?.threshold_flagged
-            return (
-              <TableRow key={r.id} data-testid={`row-${r.id}`} className="align-top whitespace-normal">
-                <TableCell className="whitespace-normal">
-                  <JargonTerm term={`defense-${r.id}`} body={r.id === 'retrieval_score_threshold' ? `${def.desc} ${c.thresholdIdea}` : def.desc}>
-                    <span className="font-semibold">{def.name}</span>
-                  </JargonTerm>
-                  {r.id === 'retrieval_score_threshold' && note && (
-                    <div className="mt-1 text-sm" data-testid="threshold-note">
-                      {fmt(c.thresholdNote, { limit, n: note.n, m: note.m })}
-                    </div>
-                  )}
-                </TableCell>
-                {r.run ? (
-                  <>
-                    <TableCell className="whitespace-normal">
-                      <Badge variant="gray" data-testid={`raw-${r.id}`} data-repeated={rawRepeated(r.run)}>
-                        {rawRepeated(r.run) ? <CircleXIcon aria-hidden="true" /> : <CircleCheckIcon aria-hidden="true" />}
-                        {rawRepeated(r.run) ? c.rawRepeated : c.rawClean}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="whitespace-normal">
-                      <p className="line-clamp-1 text-base leading-snug">{r.run.response}</p>
-                      <details className="text-sm text-muted-foreground">
-                        <summary className="cursor-pointer">{c.fullAnswer}</summary>
-                        <p className="mt-1 text-foreground">{r.run.response}</p>
-                        {stopped && (
-                          <p className="mt-2" data-testid={`stopped-${r.id}`}>
-                            {stopped.kind === 'facts'
-                              ? fmt(c.stopped.facts, { filter: c.stopped[stopped.filter === 'notOn' ? 'notOn' : stopped.filter], sanitization: c.stopped[stopped.sanitization] })
-                              : c.stopped[stopped.kind]}
-                          </p>
-                        )}
-                        <TraceCollapsible>
-                          <TraceCollapsibleTrigger>
-                            <TraceLine>
-                              <TraceIcon><CircleAlertIcon /></TraceIcon>
-                              <TraceTitle className="text-sm">{demoContent.pipeline.title}</TraceTitle>
-                            </TraceLine>
-                          </TraceCollapsibleTrigger>
-                          <TraceCollapsibleContent><PipelineTrace run={r.run} /></TraceCollapsibleContent>
-                        </TraceCollapsible>
-                      </details>
-                    </TableCell>
-                    <TableCell className="whitespace-normal">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <StatusBadge status={r.verdict} />
-                        {flagged && (
-                          <Badge variant="amber"><FlagIcon aria-hidden="true" />{c.flaggedBadge}</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                  </>
-                ) : (
-                  <TableCell colSpan={3} className="text-muted-foreground">
-                    {current === r.id ? (
-                      <span className="inline-flex items-center gap-2"><Spinner />{c.runningRow}</span>
-                    ) : (
-                      c.pending
+      <div className="grid grid-cols-3 gap-2" data-testid="step5-table">
+        {table.rows.map((r) => {
+          const def = c.rows.find((x) => x.id === r.id)
+          const flags = Object.fromEntries(DEFENSE_KEYS.map((k) => [k, def.on.includes(k)]))
+          const stopped = r.run && r.id !== 'none' ? whereStopped(r.run) : null
+          const flagged = r.run?.stages?.threshold_flagged
+          return (
+            <div key={r.id} data-testid={`row-${r.id}`} className="flex flex-col gap-1 rounded-lg border bg-card px-3 py-2">
+              <JargonTerm term={`defense-${r.id}`} body={r.id === 'retrieval_score_threshold' ? `${def.desc} ${c.thresholdIdea}` : def.desc}>
+                <span className="text-base font-semibold">{def.name}</span>
+              </JargonTerm>
+              {r.id === 'retrieval_score_threshold' && note && (
+                <div className="text-sm" data-testid="threshold-note">
+                  {fmt(c.thresholdNote, { limit, n: note.n, m: note.m })}
+                </div>
+              )}
+              {r.run ? (
+                <>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="inline-flex items-center gap-1.5 text-base" data-testid={`raw-${r.id}`} data-repeated={rawRepeated(r.run)} title={rawRepeated(r.run) ? c.rawRepeated : c.rawClean}>
+                      {rawRepeated(r.run) ? <CircleXIcon className="size-5" aria-hidden="true" /> : <CircleCheckIcon className="size-5" aria-hidden="true" />}
+                      {rawRepeated(r.run) ? c.rawRepeatedShort : c.rawCleanShort}
+                    </span>
+                    <StatusBadge status={r.verdict} />
+                    {flagged && <Badge variant="amber"><FlagIcon aria-hidden="true" />{c.flaggedBadge}</Badge>}
+                  </div>
+                  <details className="text-sm text-muted-foreground">
+                    <summary className="cursor-pointer">{c.fullAnswer}</summary>
+                    <div className="mt-1">{c.colUser}:</div>
+                    <p className="mt-1 text-foreground">{r.run.response}</p>
+                    {stopped && (
+                      <p className="mt-2" data-testid={`stopped-${r.id}`}>
+                        {stopped.kind === 'facts'
+                          ? fmt(c.stopped.facts, { filter: c.stopped[stopped.filter === 'notOn' ? 'notOn' : stopped.filter], sanitization: c.stopped[stopped.sanitization] })
+                          : c.stopped[stopped.kind]}
+                      </p>
                     )}
-                    <div className="mt-1"><FlagChips flags={flags} limit={limit} /></div>
-                  </TableCell>
-                )}
-              </TableRow>
-            )
-          })}
-        </TableBody>
-      </Table>
+                    <TraceCollapsible>
+                      <TraceCollapsibleTrigger>
+                        <TraceLine>
+                          <TraceIcon><CircleAlertIcon /></TraceIcon>
+                          <TraceTitle className="text-sm">{demoContent.pipeline.title}</TraceTitle>
+                        </TraceLine>
+                      </TraceCollapsibleTrigger>
+                      <TraceCollapsibleContent><PipelineTrace run={r.run} /></TraceCollapsibleContent>
+                    </TraceCollapsible>
+                  </details>
+                </>
+              ) : (
+                <div className="text-muted-foreground">
+                  {current === r.id ? (
+                    <span className="inline-flex items-center gap-2"><Spinner />{c.runningRow}</span>
+                  ) : (
+                    c.pending
+                  )}
+                  <div className="mt-1"><FlagChips flags={flags} limit={limit} /></div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </StepFrame>
   )
 }

@@ -417,6 +417,16 @@ def _drop_leftover_sandbox():
         pass
 
 
+@app.on_event("startup")
+def _warm_embedding_model():
+    # Load the embedding model and run one embedding now, so the first live query is not a cold start.
+    # uvicorn only serves /health after startup hooks finish, so start-dev.ps1's health wait covers this.
+    try:
+        ingestion.get_embed_model().get_text_embedding("warm-up")
+    except Exception:
+        pass
+
+
 @app.get("/settings")
 def get_settings():
     """

@@ -14,7 +14,14 @@ import time
 import pytest
 import requests
 
-DEPLOYED_BASE_URL = os.getenv("DEPLOYED_BACKEND_URL", "https://backend-production-6ba8.up.railway.app")
+DEPLOYED_BASE_URL = os.getenv("DEPLOYED_BACKEND_URL", "").strip().rstrip("/")
+
+# Deployment is paused (the Railway service was deleted), so there is no default URL. Set DEPLOYED_BACKEND_URL
+# to run these against a live deployment; without it the whole module is skipped.
+pytestmark = pytest.mark.skipif(
+    not DEPLOYED_BASE_URL,
+    reason="DEPLOYED_BACKEND_URL is not set: deployment is paused (Railway service deleted), so there is nothing to test",
+)
 TRIGGER_QUERY = "Summarize the refund policy from our FAQ."
 
 

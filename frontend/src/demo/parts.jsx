@@ -25,8 +25,8 @@ import { replayMeta } from './replay.js'
 
 export function StepFrame({ title, lead, children }) {
   return (
-    <section className="flex flex-col gap-3">
-      <h1 className="text-[1.7rem] font-semibold leading-tight text-foreground">{title}</h1>
+    <section className="flex flex-col gap-2">
+      <h1 className="text-[1.5rem] font-semibold leading-tight text-foreground">{title}</h1>
       {lead && <p className="max-w-5xl text-base leading-snug text-muted-foreground">{lead}</p>}
       {children}
     </section>

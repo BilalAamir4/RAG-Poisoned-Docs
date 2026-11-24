@@ -133,13 +133,13 @@ export default function DemoApp() {
             {ch.inspectorLink}
           </a>
         </header>
-        <main className="mx-auto w-full max-w-[1700px] flex-1 px-8 pb-3 pt-4" data-testid="demo-main" data-step={step}>
+        <main className="mx-auto w-full max-w-[1700px] flex-1 px-8 pb-2 pt-2" data-testid="demo-main" data-step={step}>
           {body}
         </main>
-        <footer className="sticky bottom-0 border-t bg-background/95 px-8 py-2 backdrop-blur">
-          <Progress value={(step / TOTAL) * 100} className="mb-2 h-1.5" aria-label={fmt(ch.stepOf, { n: step, total: TOTAL })} />
+        <footer className="sticky bottom-0 border-t bg-background/95 px-8 py-1.5 backdrop-blur">
+          <Progress value={(step / TOTAL) * 100} className="mb-1.5 h-1" aria-label={fmt(ch.stepOf, { n: step, total: TOTAL })} />
           <div className="flex items-center justify-between gap-4">
-            <Button variant="outline" size="lg" className="h-12 px-6 text-base" onClick={back} data-testid="back-btn" disabled={step === 1 && stage === 0}>
+            <Button variant="outline" size="lg" className="h-10 px-6 text-base" onClick={back} data-testid="back-btn" disabled={step === 1 && stage === 0}>
               {ch.back}
             </Button>
             <nav className="flex items-center gap-2" aria-label="Steps">
@@ -147,7 +147,7 @@ export default function DemoApp() {
                 <Button
                   key={title}
                   variant={i + 1 === step ? 'default' : 'ghost'}
-                  className="size-10 text-base"
+                  className="size-9 text-base"
                   title={title}
                   aria-label={`${i + 1}. ${title}`}
                   aria-current={i + 1 === step ? 'step' : undefined}
@@ -165,7 +165,7 @@ export default function DemoApp() {
               <span className="flex items-center gap-1 text-sm text-muted-foreground">
                 <Kbd>←</Kbd><Kbd>→</Kbd> {ch.keysHint}
               </span>
-              <Button size="lg" className="h-12 px-6 text-base" onClick={next} data-testid="next-btn" disabled={step === TOTAL}>
+              <Button size="lg" className="h-10 px-6 text-base" onClick={next} data-testid="next-btn" disabled={step === TOTAL}>
                 {ch.next}
               </Button>
             </div>

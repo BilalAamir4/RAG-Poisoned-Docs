@@ -14,5 +14,5 @@ if [ ! -f "$DOCS_PATH/faq_doc.md" ]; then
 fi
 
 PORT="${PORT:-8000}"
-echo "[Entrypoint] Starting Sentinel RAG backend on port $PORT with DATA_DIR=$DATA_PATH"
+echo "[Entrypoint] Starting PoisonDoc backend on port $PORT with DATA_DIR=$DATA_PATH"
 exec uvicorn main:app --host 0.0.0.0 --port "$PORT"

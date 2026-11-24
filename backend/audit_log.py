@@ -1,5 +1,5 @@
 """
-Sentinel RAG - Audit Logging Module
+PoisonDoc - Audit Logging Module
 Manages the SQLite audit logging layer (Spec 1.9).
 Stores database at f"{config.DATA_DIR}/audit.db" via config.py (no hardcoded paths).
 """

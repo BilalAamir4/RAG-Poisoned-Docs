@@ -1,5 +1,5 @@
 """
-Sentinel RAG - Swappable LLM Client
+PoisonDoc - Swappable LLM Client
 OpenAI-compatible /v1/chat/completions client.
 All LLM generation in the application MUST go through generate().
 """

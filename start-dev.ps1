@@ -1,4 +1,4 @@
-# Sentinel RAG - Demo / Development Launcher (PowerShell)
+# PoisonDoc - Demo / Development Launcher (PowerShell)
 # Starts Ollama (context 8192) if needed, checks the configured model, starts the backend,
 # waits for /health, warms the model, then runs Vite in this window. Ctrl+C stops what it started.
 $ErrorActionPreference = "Stop"
@@ -10,7 +10,7 @@ function Pass($m) { Write-Host "  [PASS] $m" -ForegroundColor Green }
 function Warn($m) { Write-Host "  [WARN] $m" -ForegroundColor Yellow }
 function Fail($m) { Write-Host "  [FAIL] $m" -ForegroundColor Red; exit 1 }
 
-Write-Host "=== Sentinel RAG - Launcher ===" -ForegroundColor Cyan
+Write-Host "=== PoisonDoc - Launcher ===" -ForegroundColor Cyan
 
 # [1/6] Environment files
 Write-Host "[1/6] Checking environment files..."

@@ -49,7 +49,7 @@ def test_frontend_dev_server_serves_html():
     res = requests.get(url, timeout=5)
     assert res.status_code == 200
     html = res.text
-    assert "Sentinel RAG" in html
+    assert "PoisonDoc" in html
     assert "IBM+Plex+Sans" in html
     assert "IBM+Plex+Mono" in html
     assert 'id="root"' in html

@@ -12,6 +12,9 @@ export default function Step1({ stage }) {
   const c = demoContent.step1
   return (
     <StepFrame title={c.title} lead={c.lead}>
+      <p className="text-base font-semibold text-sh-primary" data-testid="brand">
+        {demoContent.brand.name} <span className="font-normal text-sh-muted-foreground">— {demoContent.brand.tagline}</span>
+      </p>
       <div className="grid grid-cols-4 items-stretch gap-3" data-testid="diagram" data-revealed={stage}>
         {c.stages.map((s, i) => {
           const Icon = ICONS[i]

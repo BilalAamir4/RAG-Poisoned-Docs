@@ -149,7 +149,7 @@ def print_stability_table(rows: List[Dict[str, Any]]) -> None:
     separator_line = "-+-".join("-" * w for w in col_widths)
 
     print("\n" + "=" * len(header_line))
-    print("SENTINEL RAG — 16-COMBINATION REPEATABILITY & STABILITY MATRIX (3 TRIALS PER ROW)")
+    print("POISONDOC — 16-COMBINATION REPEATABILITY & STABILITY MATRIX (3 TRIALS PER ROW)")
     print("=" * len(header_line))
     print(header_line)
     print(separator_line)

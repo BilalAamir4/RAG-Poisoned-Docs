@@ -1,5 +1,5 @@
 """
-Sentinel RAG - Promptfoo Integration Runner
+PoisonDoc - Promptfoo Integration Runner
 Executes prompt injection evaluation suites against the OpenAI-compatible LLM
 endpoint using Promptfoo.
 - Reads LLM_BASE_URL, LLM_API_KEY, LLM_MODEL via backend/config.py

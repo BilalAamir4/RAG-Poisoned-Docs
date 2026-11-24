@@ -134,7 +134,7 @@ export default function Documents() {
         <div>
           <h1>Documents</h1>
           <div className="sub">
-            Every document in the knowledge base that Sentinel can retrieve from
+            Every document in the knowledge base that PoisonDoc can retrieve from
           </div>
         </div>
         <button

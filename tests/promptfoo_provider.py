@@ -9,7 +9,7 @@ from pipeline import query_pipeline
 
 def call_api(prompt, options, context):
     """
-    Promptfoo custom Python provider for Sentinel RAG.
+    Promptfoo custom Python provider for PoisonDoc.
     Executes the full retrieval-to-generation pipeline with mitigations ON.
     Returns clean response (with reasoning_content separated).
     """

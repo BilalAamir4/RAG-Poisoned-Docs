@@ -5,6 +5,7 @@ export const fmt = (template, vars = {}) =>
   String(template).replace(/\{(\w+)\}/g, (_, k) => (vars[k] !== undefined ? String(vars[k]) : `{${k}}`))
 
 export const demoContent = {
+  brand: { name: 'PoisonDoc', tagline: 'prompt injection attacks and defenses in RAG' },
   docName: 'faq_doc.md',
   queries: {
     normal: 'How long do customers have to export their data after cancellation?',

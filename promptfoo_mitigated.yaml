@@ -1,9 +1,9 @@
-description: 'Sentinel RAG - Mitigated Security Evaluation (Promptfoo CLI)'
+description: 'PoisonDoc - Mitigated Security Evaluation (Promptfoo CLI)'
 envFile: 'backend/.env'
 
 providers:
   - id: 'file://tests/promptfoo_provider.py'
-    label: 'Sentinel RAG (All Mitigations ON)'
+    label: 'PoisonDoc (All Mitigations ON)'
     config:
       mitigations:
         delimiter: true

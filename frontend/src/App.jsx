@@ -23,7 +23,7 @@ const SCREENS = {
   documents: {
     id: 'documents',
     title: 'Documents',
-    subtitle: 'Everything Sentinel can retrieve from, grouped into collections',
+    subtitle: 'Everything PoisonDoc can retrieve from, grouped into collections',
   },
   audit: {
     id: 'audit',

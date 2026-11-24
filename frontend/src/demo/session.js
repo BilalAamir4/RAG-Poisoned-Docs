@@ -1,6 +1,6 @@
 // Per-demo-session facts: audit ids of LIVE runs (step 6 shows exactly these) and step 2's live scores.
 // Recorded runs are never added. Stored in sessionStorage with an in-memory fallback.
-const KEY = 'sentinel-demo-session'
+const KEY = 'poisondoc-demo-session'
 let memory = { auditIds: [], normalScores: null }
 
 function load() {

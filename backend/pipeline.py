@@ -1,5 +1,5 @@
 """
-Sentinel RAG - Retrieval-to-Generation Pipeline
+PoisonDoc - Retrieval-to-Generation Pipeline
 Wires retriever.retrieve(query) -> build_prompt() -> llm_client.generate().
 Implements 4 independently toggleable security controls (Spec 1.7 & 1.8):
 1. Delimiter / instruction-hierarchy enforcement (<untrusted_context> tags + system prompt)

@@ -122,12 +122,12 @@ export default function DemoApp() {
   const ch = demoContent.chrome
   return (
     <TooltipProvider>
-      <div className="demo-root sh-scope flex min-h-screen flex-col bg-background text-base text-foreground">
+      <div className="demo-root sh-scope flex min-h-screen flex-col bg-sh-background text-base text-sh-foreground">
         <header className="absolute right-8 top-3 z-10">
           <a
             href="#/trace"
             data-testid="inspector-link"
-            className="rounded px-2 py-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+            className="rounded px-2 py-1 text-sm text-sh-muted-foreground underline underline-offset-4 hover:text-sh-foreground"
             onClick={(e) => { e.preventDefault(); requestHash('#/trace') }}
           >
             {ch.inspectorLink}
@@ -136,7 +136,7 @@ export default function DemoApp() {
         <main className="mx-auto w-full max-w-[1700px] flex-1 px-8 pb-2 pt-2" data-testid="demo-main" data-step={step}>
           {body}
         </main>
-        <footer className="sticky bottom-0 border-t bg-background/95 px-8 py-1.5 backdrop-blur">
+        <footer className="sticky bottom-0 border-t bg-sh-background/95 px-8 py-1.5 backdrop-blur">
           <Progress value={(step / TOTAL) * 100} className="mb-1.5 h-1" aria-label={fmt(ch.stepOf, { n: step, total: TOTAL })} />
           <div className="flex items-center justify-between gap-4">
             <Button variant="outline" size="lg" className="h-10 px-6 text-base" onClick={back} data-testid="back-btn" disabled={step === 1 && stage === 0}>
@@ -157,12 +157,12 @@ export default function DemoApp() {
                   {i + 1}
                 </Button>
               ))}
-              <span className="ml-3 text-sm text-muted-foreground" data-testid="step-label">
+              <span className="ml-3 text-sm text-sh-muted-foreground" data-testid="step-label">
                 {fmt(ch.stepOf, { n: step, total: TOTAL })}
               </span>
             </nav>
             <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1 text-sm text-sh-muted-foreground">
                 <Kbd>←</Kbd><Kbd>→</Kbd> {ch.keysHint}
               </span>
               <Button size="lg" className="h-10 px-6 text-base" onClick={next} data-testid="next-btn" disabled={step === TOTAL}>

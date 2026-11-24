@@ -20,7 +20,7 @@ import { demoContent, fmt } from '../demoContent.js'
 import { dropSandbox, getSandbox, plantSandbox, runDemoQuery } from '../demoApi.js'
 import { PipelineTrace, RunStatus, StepFrame } from '../parts.jsx'
 import { expectedSeconds, useAsyncRun } from '../useAsyncRun.js'
-import { step7SameAnswer } from '../verdicts.js'
+import { step7NoChange } from '../verdicts.js'
 import { ALL_OFF } from './Step2.jsx'
 
 const ALL_ON = Object.fromEntries(Object.keys(ALL_OFF).map((k) => [k, true]))
@@ -31,34 +31,36 @@ function ResultCard({ title, run }) {
   const same = String(run.raw_response ?? '').trim() === String(run.response ?? '').trim()
   const filter = !st?.output_filter_ran ? c.filterOff : st.output_filter_blocked ? c.filterBlocked : c.filterPassed
   return (
-    <Card data-testid="step7-result">
+    <Card size="sm" data-testid="step7-result">
       <CardHeader>
         <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-2 text-sm leading-snug">
         {same ? (
           <div>
-            <div className="text-sm text-muted-foreground">{c.rawIsFinal}</div>
+            <div className="text-sm text-sh-muted-foreground">{c.rawIsFinal}</div>
             <p className="text-sm" data-testid="step7-raw">{run.raw_response}</p>
             <span hidden data-testid="step7-final">{run.response}</span>
           </div>
         ) : (
           <>
             <div>
-              <div className="text-sm text-muted-foreground">{c.raw}</div>
+              <div className="text-sm text-sh-muted-foreground">{c.raw}</div>
               <p className="text-sm" data-testid="step7-raw">{run.raw_response}</p>
             </div>
             <div>
-              <div className="text-sm text-muted-foreground">{c.final}</div>
+              <div className="text-sm text-sh-muted-foreground">{c.final}</div>
               <p className="text-sm" data-testid="step7-final">{run.response}</p>
             </div>
           </>
         )}
-        <Badge variant="gray" className="self-start">{fmt(c.filterLine, { result: filter })}</Badge>
-        <details className="text-sm text-muted-foreground">
-          <summary className="cursor-pointer">{demoContent.pipeline.title}</summary>
-          <PipelineTrace run={run} />
-        </details>
+        <div className="flex flex-wrap items-start gap-x-4 gap-y-1">
+          <Badge variant="gray">{fmt(c.filterLine, { result: filter })}</Badge>
+          <details className="text-sm text-sh-muted-foreground">
+            <summary className="cursor-pointer">{demoContent.pipeline.title}</summary>
+            <PipelineTrace run={run} />
+          </details>
+        </div>
       </CardContent>
     </Card>
   )
@@ -110,7 +112,15 @@ export default function Step7({ onSandboxChange, registerRestore }) {
 
   return (
     <StepFrame title={c.title} lead={out ? null : c.lead}>
-      <label htmlFor="instruction" className="text-base font-medium">{c.inputLabel}</label>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <label htmlFor="instruction" className="text-base font-medium">{c.inputLabel}</label>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-sh-muted-foreground">{c.restoreHint}</span>
+          <Button variant="outline" size="lg" data-testid="restore-btn" className="h-10 px-5 text-base" onClick={() => setRestoreOpen(true)} disabled={!active}>
+            {c.restore}
+          </Button>
+        </div>
+      </div>
       <div className="flex items-start gap-4">
         <Textarea
           id="instruction"
@@ -125,7 +135,7 @@ export default function Step7({ onSandboxChange, registerRestore }) {
           {c.plant}
         </Button>
       </div>
-      <div className="flex flex-wrap items-center gap-x-4 text-sm text-muted-foreground">
+      <div className={`flex flex-wrap items-center gap-x-4 text-sm text-sh-muted-foreground ${out && !tooLong ? 'hidden' : ''}`}>
         {maxChars != null && <span data-testid="counter">{fmt(c.counter, { n: text.length, max: maxChars })}</span>}
         <span>{fmt(c.waitLine, { n: exp.n + demoContent.typicalSeconds.sandboxBuild })}</span>
       </div>
@@ -133,28 +143,24 @@ export default function Step7({ onSandboxChange, registerRestore }) {
       {run.state === 'running' && <Skeleton className="h-20 w-full" aria-label={c.building} />}
       {out && (
         <>
-          <Alert data-testid="step7-retrieval" data-retrieved={Boolean(out.off.sandbox?.planted_text_in_retrieved)}>
-            <CircleAlertIcon />
-            <AlertTitle>{out.off.sandbox?.planted_text_in_retrieved ? c.retrieved : c.notRetrieved}</AlertTitle>
-          </Alert>
-          {step7SameAnswer(out) && (
-            <p className="text-base font-semibold" data-testid="step7-same-answer">{c.sameAnswerLine}</p>
-          )}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <Alert className="w-auto" data-testid="step7-retrieval" data-retrieved={Boolean(out.off.sandbox?.planted_text_in_retrieved)}>
+              <CircleAlertIcon />
+              <AlertTitle>{out.off.sandbox?.planted_text_in_retrieved ? c.retrieved : c.notRetrieved}</AlertTitle>
+            </Alert>
+            {step7NoChange(out) && (
+              <p className="text-base font-semibold" data-testid="step7-no-change">{c.noChangeLine}</p>
+            )}
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <ResultCard title={c.colOff} run={out.off} />
             <ResultCard title={c.colOn} run={out.on} />
           </div>
-          <p className="text-sm text-muted-foreground" data-testid="auto-check-note">{c.autoCheckNote}</p>
+          <p className="text-sm text-sh-muted-foreground" data-testid="auto-check-note">{c.autoCheckNote}</p>
         </>
       )}
       {restoredMsg && <Alert data-testid="restored"><AlertTitle>{c.restored}</AlertTitle></Alert>}
-      {restoreError && <Alert data-testid="restore-error" className="border-primary"><AlertDescription className="text-foreground">{restoreError}</AlertDescription></Alert>}
-      <div className="flex items-center gap-3">
-        <Button variant="outline" size="lg" className="h-12 px-6 text-base" onClick={() => setRestoreOpen(true)} disabled={!active}>
-          {c.restore}
-        </Button>
-        <span className="text-sm text-muted-foreground">{c.restoreHint}</span>
-      </div>
+      {restoreError && <Alert data-testid="restore-error" className="border-sh-primary"><AlertDescription className="text-sh-foreground">{restoreError}</AlertDescription></Alert>}
       <AlertDialog open={restoreOpen} onOpenChange={setRestoreOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

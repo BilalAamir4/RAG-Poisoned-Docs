@@ -26,8 +26,8 @@ import { replayMeta } from './replay.js'
 export function StepFrame({ title, lead, children }) {
   return (
     <section className="flex flex-col gap-2">
-      <h1 className="text-[1.5rem] font-semibold leading-tight text-foreground">{title}</h1>
-      {lead && <p className="max-w-5xl text-base leading-snug text-muted-foreground">{lead}</p>}
+      <h1 className="text-[1.5rem] font-semibold leading-tight text-sh-foreground">{title}</h1>
+      {lead && <p className="max-w-5xl text-base leading-snug text-sh-muted-foreground">{lead}</p>}
       {children}
     </section>
   )
@@ -39,7 +39,7 @@ export function RunRow({ label, question, flags, limit, onRun, disabled, buttonL
     <div className="flex items-start justify-between gap-6">
       <div className="flex flex-col gap-2">
         <p className="text-base leading-snug">
-          <span className="text-muted-foreground">{label} </span>“{question}”
+          <span className="text-sh-muted-foreground">{label} </span>“{question}”
         </p>
         <FlagChips flags={flags} limit={limit} />
       </div>
@@ -61,7 +61,7 @@ export function JargonTerm({ term, body, children }) {
         <button
           type="button"
           data-testid={`term-${term}`}
-          className="inline-flex items-baseline gap-1 rounded underline decoration-dotted decoration-2 underline-offset-4 focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="inline-flex items-baseline gap-1 rounded underline decoration-dotted decoration-2 underline-offset-4 focus-visible:ring-3 focus-visible:ring-sh-ring/50"
           onClick={() => { const next = !pinned; setPinned(next); setOpen(next) }}
         >
           {children}
@@ -92,7 +92,7 @@ export function StatusBadge({ status, className }) {
 export function ReplayBanner() {
   const meta = replayMeta()
   return (
-    <Alert data-testid="replay-banner" className="border-primary">
+    <Alert data-testid="replay-banner" className="border-sh-primary">
       <CircleAlertIcon />
       <AlertTitle>{fmt(demoContent.live.replayBanner, meta)}</AlertTitle>
     </Alert>
@@ -103,7 +103,7 @@ export function FlagChips({ flags, limit }) {
   const c = demoContent.live
   return (
     <div className="flex flex-wrap items-center gap-2" data-testid="flag-chips">
-      <span className="text-sm text-muted-foreground">{c.defensesLine}</span>
+      <span className="text-sm text-sh-muted-foreground">{c.defensesLine}</span>
       {DEFENSE_KEYS.map((k) => (
         <Badge key={k} variant={flags?.[k] ? 'outline' : 'gray'} data-on={Boolean(flags?.[k])}>
           {c.controlNames[k]}: {flags?.[k] ? c.on : c.off}
@@ -134,11 +134,11 @@ export function RunStatus({ run, kind = 'query', onRetry, onShowRecorded, record
   }
   if (run.state === 'error') {
     return (
-      <Alert data-testid="run-error" className="border-primary">
+      <Alert data-testid="run-error" className="border-sh-primary">
         <CircleAlertIcon />
         <AlertTitle>{c.errorTitle}</AlertTitle>
         <AlertDescription>
-          <p data-testid="run-error-text" className="break-words text-foreground">{run.error}</p>
+          <p data-testid="run-error-text" className="break-words text-sh-foreground">{run.error}</p>
           <div className="mt-2 flex gap-3">
             {onRetry && <Button size="sm" variant="outline" onClick={onRetry}>{c.retry}</Button>}
             {onShowRecorded && (

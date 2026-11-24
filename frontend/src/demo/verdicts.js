@@ -48,14 +48,14 @@ export function evaluateTable(rows) {
   return { rows: withVerdicts, baseline: base, baselineLeaked, blockedBy, didNotBlock, allFour, redSingles, showTakeaway }
 }
 
-// Step 7 fact: the planted text was retrieved AND the all-four-defenses answer equals the defenses-off answer
-// (whitespace-normalised, case-sensitive). Facts only: it never judges whether either answer repeats the new wording.
+// Step 7 fact: the planted text was retrieved AND, in the all-four-defenses run, the final answer equals the raw
+// model answer (whitespace-normalised): none of the defenses changed it. Facts only; never judges the new wording.
 const norm = (s) => String(s ?? '').replace(/\s+/g, ' ').trim()
-export function step7SameAnswer(out) {
-  if (!out?.off || !out?.on) return false
-  if (!out.off.sandbox?.planted_text_in_retrieved) return false
-  const off = norm(out.off.response)
-  return off !== '' && off === norm(out.on.response)
+export function step7NoChange(out) {
+  if (!out?.on) return false
+  if (!out.off?.sandbox?.planted_text_in_retrieved) return false
+  const raw = norm(out.on.raw_response)
+  return raw !== '' && raw === norm(out.on.response)
 }
 
 // Step 2's real scores vs the limit used in step 5 (higher score = more relevant; flagged when score >= limit).

@@ -63,7 +63,7 @@ export default function Step5() {
   return (
     <StepFrame title={c.title} lead={c.lead}>
       <div className="flex items-center justify-between gap-6">
-        <p className="text-sm text-muted-foreground" data-testid="one-run-line">{c.oneRun}</p>
+        <p className="text-sm text-sh-muted-foreground" data-testid="one-run-line">{c.oneRun}</p>
         <Button size="lg" className="h-12 shrink-0 px-6 text-base" onClick={runAll} disabled={run.state === 'running'}>{c.runAll}</Button>
       </div>
       <RunStatus
@@ -91,7 +91,7 @@ export default function Step5() {
             <span data-testid="summary-all">{fmt(c.allFour, { result: c.allFourResult[table.allFour] })}</span>
           </AlertTitle>
           {table.showTakeaway && (
-            <AlertDescription className="text-base text-foreground" data-testid="takeaway">
+            <AlertDescription className="text-base text-sh-foreground" data-testid="takeaway">
               {fmt(c.takeaway, { list: names(table.redSingles) })}
             </AlertDescription>
           )}
@@ -104,7 +104,7 @@ export default function Step5() {
           const stopped = r.run && r.id !== 'none' ? whereStopped(r.run) : null
           const flagged = r.run?.stages?.threshold_flagged
           return (
-            <div key={r.id} data-testid={`row-${r.id}`} className="flex flex-col gap-1 rounded-lg border bg-card px-3 py-2">
+            <div key={r.id} data-testid={`row-${r.id}`} className="flex flex-col gap-1 rounded-sh-lg border bg-sh-card px-3 py-2">
               <JargonTerm term={`defense-${r.id}`} body={r.id === 'retrieval_score_threshold' ? `${def.desc} ${c.thresholdIdea}` : def.desc}>
                 <span className="text-base font-semibold">{def.name}</span>
               </JargonTerm>
@@ -123,10 +123,10 @@ export default function Step5() {
                     <StatusBadge status={r.verdict} />
                     {flagged && <Badge variant="amber"><FlagIcon aria-hidden="true" />{c.flaggedBadge}</Badge>}
                   </div>
-                  <details className="text-sm text-muted-foreground">
+                  <details className="text-sm text-sh-muted-foreground">
                     <summary className="cursor-pointer">{c.fullAnswer}</summary>
                     <div className="mt-1">{c.colUser}:</div>
-                    <p className="mt-1 text-foreground">{r.run.response}</p>
+                    <p className="mt-1 text-sh-foreground">{r.run.response}</p>
                     {stopped && (
                       <p className="mt-2" data-testid={`stopped-${r.id}`}>
                         {stopped.kind === 'facts'
@@ -146,7 +146,7 @@ export default function Step5() {
                   </details>
                 </>
               ) : (
-                <div className="text-muted-foreground">
+                <div className="text-sh-muted-foreground">
                   {current === r.id ? (
                     <span className="inline-flex items-center gap-2"><Spinner />{c.runningRow}</span>
                   ) : (

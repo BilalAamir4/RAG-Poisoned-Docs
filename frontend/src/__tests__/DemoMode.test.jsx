@@ -119,9 +119,9 @@ describe('jargon tooltip', () => {
   })
 })
 
-describe('step 7 same-answer fact line', () => {
-  const stages = { retrieval_ms: 10, generation_ms: 20, output_filter_ran: false }
-  const mk = (response, retrieved) => ({ response, raw_response: response, stages, sandbox: { planted_text_in_retrieved: retrieved } })
+describe('step 7 no-change fact line', () => {
+  const stages = { retrieval_ms: 10, generation_ms: 20, output_filter_ran: true }
+  const mk = (raw, final, retrieved) => ({ response: final, raw_response: raw, stages, sandbox: { planted_text_in_retrieved: retrieved } })
   async function runStep7(off, on) {
     api.getSandbox.mockResolvedValue({ exists: false, max_chars: 500 })
     api.plantSandbox.mockResolvedValue({ exists: true })
@@ -131,16 +131,16 @@ describe('step 7 same-answer fact line', () => {
     fireEvent.click(screen.getByText(demoContent.step7.plant))
     await screen.findByTestId('step7-retrieval')
   }
-  it('shows when the planted text was retrieved and both answers are equal', async () => {
-    await runStep7(mk('Refunds last 90 days.', true), mk('Refunds last 90 days.', true))
-    expect(screen.getByTestId('step7-same-answer')).toHaveTextContent(demoContent.step7.sameAnswerLine)
+  it('shows when the planted text was retrieved and the all-four final answer equals its raw answer (even if it differs from the defenses-off answer)', async () => {
+    await runStep7(mk('Off answer.', 'Off answer.', true), mk('On answer.', 'On answer.', true))
+    expect(screen.getByTestId('step7-no-change')).toHaveTextContent(demoContent.step7.noChangeLine)
   })
-  it('does not show when the answers differ', async () => {
-    await runStep7(mk('Refunds last 90 days.', true), mk('Refunds last 30 days.', true))
-    expect(screen.queryByTestId('step7-same-answer')).toBeNull()
+  it('does not show when a defense changed the answer (final differs from raw)', async () => {
+    await runStep7(mk('Refunds last 90 days.', 'Refunds last 90 days.', true), mk('Refunds last 90 days.', 'Response blocked.', true))
+    expect(screen.queryByTestId('step7-no-change')).toBeNull()
   })
-  it('does not show when the planted text was not retrieved, even if the answers are equal', async () => {
-    await runStep7(mk('Refunds last 30 days.', false), mk('Refunds last 30 days.', false))
-    expect(screen.queryByTestId('step7-same-answer')).toBeNull()
+  it('does not show when the planted text was not retrieved, even if final equals raw', async () => {
+    await runStep7(mk('Refunds last 30 days.', 'Refunds last 30 days.', false), mk('Refunds last 30 days.', 'Refunds last 30 days.', false))
+    expect(screen.queryByTestId('step7-no-change')).toBeNull()
   })
 })

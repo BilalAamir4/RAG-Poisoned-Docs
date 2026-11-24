@@ -34,11 +34,11 @@ export default function Step3() {
   return (
     <StepFrame title={c.title} lead={c.lead}>
       {error && (
-        <Alert data-testid="run-error" className="border-primary">
+        <Alert data-testid="run-error" className="border-sh-primary">
           <CircleAlertIcon />
           <AlertTitle>{demoContent.live.errorTitle}</AlertTitle>
           <AlertDescription>
-            <p className="text-foreground">{error}</p>
+            <p className="text-sh-foreground">{error}</p>
             <Button size="sm" variant="outline" className="mt-2" onClick={load}>{demoContent.live.retry}</Button>
           </AlertDescription>
         </Alert>
@@ -48,7 +48,7 @@ export default function Step3() {
         <div className="grid grid-cols-3 gap-4">
           <Card className="col-span-2">
             <CardContent>
-              <p className="mb-2 font-mono text-sm text-muted-foreground">{doc.filename}</p>
+              <p className="mb-2 font-mono text-sm text-sh-muted-foreground">{doc.filename}</p>
               <div ref={boxRef} data-testid="doc-text" className="relative max-h-[56vh] overflow-y-auto whitespace-pre-wrap text-sm leading-snug">
                 <Highlight text={doc.text} spans={doc.injected_span ? [doc.injected_span] : []} label={c.hiddenLabel} />
               </div>

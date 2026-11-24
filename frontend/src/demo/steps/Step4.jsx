@@ -62,8 +62,8 @@ export default function Step4() {
             <Card>
               <CardHeader><CardTitle className="text-base">{c.policyTitle}</CardTitle></CardHeader>
               <CardContent className="text-base leading-snug" data-testid="step4-policy">
-                {doc?.policy_text ?? (docError ? <span className="text-muted-foreground">{docError}</span> : <Skeleton className="h-16 w-full" />)}
-                {doc?.policy_text && <p className="mt-2 text-sm text-muted-foreground">{c.policyNote}</p>}
+                {doc?.policy_text ?? (docError ? <span className="text-sh-muted-foreground">{docError}</span> : <Skeleton className="h-16 w-full" />)}
+                {doc?.policy_text && <p className="mt-2 text-sm text-sh-muted-foreground">{c.policyNote}</p>}
               </CardContent>
             </Card>
           </div>

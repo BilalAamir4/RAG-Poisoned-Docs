@@ -60,7 +60,7 @@ export default function Step2() {
                         <Badge variant="gray">{fmt(c.scoreLabel, { score })}</Badge>
                       </JargonTerm>
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-sh-muted-foreground">
                       {fmt(c.explanation, { document: ch.source_document, score })}
                     </p>
                   </CardContent>

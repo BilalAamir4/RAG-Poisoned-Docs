@@ -19,12 +19,13 @@ function TechniqueBar({ tech }) {
   const pct = (n) => (total ? (n / total) * 100 : 0)
   return (
     <div data-testid="technique-row">
-      <div className="text-base font-medium">{tech.label}</div>
-      <div className="text-sm text-muted-foreground">
-        <span>
-          {demoContent.step6.statsBlocked} {blocked}/{total} · {demoContent.step6.statsSucceeded} {succeeded}/{total}</span>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4">
+        <span className="text-base font-medium">{tech.label}</span>
+        <span className="text-sm text-sh-muted-foreground">
+          {demoContent.step6.statsBlocked} {blocked}/{total} · {demoContent.step6.statsSucceeded} {succeeded}/{total}
+        </span>
       </div>
-      <div className="mt-1 flex h-4 w-full overflow-hidden rounded bg-muted" role="img" aria-label={`${tech.label}: ${blocked} of ${total} blocked`}>
+      <div className="mt-1 flex h-4 w-full overflow-hidden rounded bg-sh-muted" role="img" aria-label={`${tech.label}: ${blocked} of ${total} blocked`}>
         <div className="h-full bg-[var(--status-teal)]" style={{ width: `${pct(blocked)}%` }} data-testid="bar-blocked" />
         <div className="h-full bg-[var(--status-red)]" style={{ width: `${pct(succeeded)}%` }} data-testid="bar-succeeded" />
       </div>
@@ -64,11 +65,11 @@ export default function Step6() {
   return (
     <StepFrame title={c.title} lead={c.lead}>
       {error && (
-        <Alert data-testid="run-error" className="border-primary">
+        <Alert data-testid="run-error" className="border-sh-primary">
           <CircleAlertIcon />
           <AlertTitle>{demoContent.live.errorTitle}</AlertTitle>
           <AlertDescription>
-            <p className="text-foreground">{error}</p>
+            <p className="text-sh-foreground">{error}</p>
             <Button size="sm" variant="outline" className="mt-2" onClick={load}>{demoContent.live.retry}</Button>
           </AlertDescription>
         </Alert>
@@ -79,11 +80,11 @@ export default function Step6() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">{c.chartTitle}</CardTitle>
-              {meta && <p className="text-sm text-muted-foreground" data-testid="run-meta">{fmt(c.runMeta, { date: date || meta.eval_id, model })}</p>}
+              {meta && <p className="text-sm text-sh-muted-foreground" data-testid="run-meta">{fmt(c.runMeta, { date: date || meta.eval_id, model })}</p>}
             </CardHeader>
-            <CardContent className="flex flex-col gap-3">
+            <CardContent className="flex flex-col gap-2">
               {techniques.length === 0 ? (
-                <p className="text-muted-foreground">{c.emptyTests}</p>
+                <p className="text-sh-muted-foreground">{c.emptyTests}</p>
               ) : (
                 <>
                   <div className="flex flex-wrap gap-x-6 gap-y-1 text-base" data-testid="stats">
@@ -93,7 +94,7 @@ export default function Step6() {
                     <span>{c.statsRate}: <b>{Number(tests.stats.block_rate_pct).toFixed(1)}%</b></span>
                   </div>
                   {techniques.map((t) => <TechniqueBar key={t.label} tech={t} />)}
-                  <p className="text-sm text-muted-foreground">{c.chartNote}</p>
+                  <p className="text-sm text-sh-muted-foreground">{c.chartNote}</p>
                 </>
               )}
             </CardContent>
@@ -101,11 +102,11 @@ export default function Step6() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">{c.sessionTitle}</CardTitle>
-              <p className="text-sm text-muted-foreground">{c.sessionNote}</p>
+              <p className="text-sm text-sh-muted-foreground">{c.sessionNote}</p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="max-h-[40vh] overflow-y-auto" data-testid="session-scroll">
               {rows && rows.length === 0 ? (
-                <p className="text-muted-foreground" data-testid="session-empty">{c.sessionEmpty}</p>
+                <p className="text-sh-muted-foreground" data-testid="session-empty">{c.sessionEmpty}</p>
               ) : (
                 <Table data-testid="session-rows">
                   <TableHeader>

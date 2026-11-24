@@ -16,7 +16,7 @@ function Trace({
     <div
       data-slot="trace"
       className={cn(
-        "flex w-full min-w-0 flex-col gap-2 *:has-[>[data-slot=trace-line]]:flex *:has-[>[data-slot=trace-line]]:w-fit *:has-[>[data-slot=trace-line]]:max-w-full *:has-[>[data-slot=trace-line]]:min-w-0 *:has-[>[data-slot=trace-line]]:rounded-md *:has-[>[data-slot=trace-line]]:text-left *:has-[>[data-slot=trace-line]]:outline-none *:has-[>[data-slot=trace-line]]:focus-visible:ring-3 *:has-[>[data-slot=trace-line]]:focus-visible:ring-ring/50",
+        "flex w-full min-w-0 flex-col gap-2 *:has-[>[data-slot=trace-line]]:flex *:has-[>[data-slot=trace-line]]:w-fit *:has-[>[data-slot=trace-line]]:max-w-full *:has-[>[data-slot=trace-line]]:min-w-0 *:has-[>[data-slot=trace-line]]:rounded-sh-md *:has-[>[data-slot=trace-line]]:text-left *:has-[>[data-slot=trace-line]]:outline-none *:has-[>[data-slot=trace-line]]:focus-visible:ring-3 *:has-[>[data-slot=trace-line]]:focus-visible:ring-sh-ring/50",
         className
       )}
       {...props}
@@ -34,7 +34,7 @@ function TraceLine({
       data-slot="trace-line"
       data-status={status}
       className={cn(
-        "flex w-fit max-w-full min-w-0 items-center gap-2 text-sm text-muted-foreground transition-colors in-[a,button]:cursor-pointer in-[a:hover,button:hover]:text-foreground data-[status=error]:text-destructive data-[status=error]:in-[a:hover,button:hover]:text-destructive data-[status=pending]:opacity-60 data-[status=running]:*:data-[slot=trace-title]:shimmer",
+        "flex w-fit max-w-full min-w-0 items-center gap-2 text-sm text-sh-muted-foreground transition-colors in-[a,button]:cursor-pointer in-[a:hover,button:hover]:text-sh-foreground data-[status=error]:text-sh-destructive data-[status=error]:in-[a:hover,button:hover]:text-sh-destructive data-[status=pending]:opacity-60 data-[status=running]:*:data-[slot=trace-title]:shimmer",
         className
       )}
       {...props}
@@ -80,7 +80,7 @@ function TraceDescription({
     <span
       data-slot="trace-description"
       className={cn(
-        "shrink-0 text-muted-foreground/70 tabular-nums",
+        "shrink-0 text-sh-muted-foreground/70 tabular-nums",
         className
       )}
       {...props}
@@ -110,7 +110,7 @@ function TraceCollapsibleTrigger({
     <CollapsibleTrigger
       data-slot="trace-collapsible-trigger"
       className={cn(
-        "group/trace-collapsible-trigger flex w-fit max-w-full min-w-0 cursor-pointer items-center gap-1 rounded-md text-left text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 has-[[data-status=error]]:text-destructive",
+        "group/trace-collapsible-trigger flex w-fit max-w-full min-w-0 cursor-pointer items-center gap-1 rounded-sh-md text-left text-sh-muted-foreground transition-colors outline-none hover:text-sh-foreground focus-visible:ring-3 focus-visible:ring-sh-ring/50 has-[[data-status=error]]:text-sh-destructive",
         className
       )}
       {...props}
@@ -138,7 +138,7 @@ function TraceCollapsibleContent({
       <div
         data-slot="trace-collapsible-content-inner"
         className={cn(
-          "mt-2 mb-1 ml-[calc(--spacing(2)-1px)] min-w-0 border-l pr-1 pl-4 leading-relaxed wrap-break-word text-muted-foreground",
+          "mt-2 mb-1 ml-[calc(--spacing(2)-1px)] min-w-0 border-l pr-1 pl-4 leading-relaxed wrap-break-word text-sh-muted-foreground",
           className
         )}
       >

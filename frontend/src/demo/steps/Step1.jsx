@@ -26,7 +26,7 @@ export default function Step1({ stage }) {
                   <Trace>
                     <TraceLine>
                       <TraceIcon><Icon /></TraceIcon>
-                      <TraceTitle className="whitespace-normal text-base font-medium text-foreground">
+                      <TraceTitle className="whitespace-normal text-base font-medium text-sh-foreground">
                         {i + 1}. {s.title}
                       </TraceTitle>
                     </TraceLine>
@@ -43,13 +43,13 @@ export default function Step1({ stage }) {
                 </CardContent>
               </Card>
               {i < c.stages.length - 1 && shown && (
-                <ChevronRightIcon className="absolute -right-3 top-1/2 z-10 size-6 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                <ChevronRightIcon className="absolute -right-3 top-1/2 z-10 size-6 -translate-y-1/2 text-sh-muted-foreground" aria-hidden="true" />
               )}
             </div>
           )
         })}
       </div>
-      {stage < c.stages.length && <p className="text-sm text-muted-foreground">{c.hint}</p>}
+      {stage < c.stages.length && <p className="text-sm text-sh-muted-foreground">{c.hint}</p>}
     </StepFrame>
   )
 }
